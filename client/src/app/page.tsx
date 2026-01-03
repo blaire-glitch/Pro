@@ -13,6 +13,8 @@ import { Testimonials } from '@/components/home/Testimonials';
 import { SmartSuggestions } from '@/components/home/SmartSuggestions';
 import { QuickActions } from '@/components/home/QuickActions';
 import { DailyRewards } from '@/components/home/DailyRewards';
+import { PersonalizedAds } from '@/components/ads/PersonalizedAds';
+import { ServiceRecommendations } from '@/components/recommendations/ServiceRecommendations';
 import { HiSearch, HiLocationMarker, HiStar, HiShieldCheck, HiClock, HiArrowRight, HiCreditCard } from 'react-icons/hi';
 
 // Coverage cities in Western Kenya
@@ -181,6 +183,25 @@ export default function HomePage() {
       {/* Daily Rewards */}
       <DailyRewards />
 
+      {/* AI-Powered Personalized Ads */}
+      <section className="py-8 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <PersonalizedAds variant="carousel" maxAds={4} />
+        </div>
+      </section>
+
+      {/* AI-Recommended Services */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <ServiceRecommendations 
+            title="Services Picked for You" 
+            showPersonalizedMessage={true}
+            maxItems={6}
+            variant="grid"
+          />
+        </div>
+      </section>
+
       {/* Categories Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -225,6 +246,18 @@ export default function HomePage() {
 
       {/* Featured Providers */}
       <FeaturedProviders />
+
+      {/* More AI Recommendations */}
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <ServiceRecommendations 
+            title="You Might Also Like" 
+            showPersonalizedMessage={false}
+            maxItems={4}
+            variant="horizontal"
+          />
+        </div>
+      </section>
 
       {/* Testimonials */}
       <Testimonials />
