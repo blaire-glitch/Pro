@@ -1,0 +1,1005 @@
+// Prisma schema for Afrionex
+// The Next-Generation Super App for Africa
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USER & AUTH ============
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  phone             String    @unique
+  password          String
+  firstName         String
+  lastName          String
+  avatar            String?
+  role              UserRole  @default(CUSTOMER)
+  isVerified        Boolean   @default(false)
+  isEmailVerified   Boolean   @default(false)
+  isPhoneVerified   Boolean   @default(false)
+  
+  // Location
+  latitude          Float?
+  longitude         Float?
+  address           String?
+  city              String?
+  country           String    @default("Kenya")
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Relations
+  provider          Provider?
+  bookingsAsCustomer Booking[] @relation("CustomerBookings")
+  deliveries        DeliveryOrder[] @relation("CustomerDeliveries")
+  reviews           Review[]
+  notifications     Notification[]
+  refreshTokens     RefreshToken[]
+  loyaltyPoints     LoyaltyPoints?
+  subscriptions     UserSubscription[]
+  shop              Shop?
+  cart              Cart?
+  marketplaceOrders MarketplaceOrder[] @relation("CustomerOrders")
+  productReviews    ProductReview[]
+  
+  @@index([email])
+  @@index([phone])
+  @@index([city, country])
+}
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+}
+
+// ============ PROVIDER ============
+
+model Provider {
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  businessName          String
+  description           String    @db.Text
+  category              ServiceCategory
+  subcategories         String[]  // Array of subcategory strings
+  
+  // Verification
+  isVerified            Boolean   @default(false)
+  verificationStatus    VerificationStatus @default(PENDING)
+  verificationDocuments String[]
+  nationalId            String?
+  businessLicense       String?
+  
+  // Ratings
+  rating                Float     @default(0)
+  reviewCount           Int       @default(0)
+  
+  // Profile
+  shareLink             String    @unique
+  gallery               String[]
+  
+  // Location
+  latitude              Float
+  longitude             Float
+  address               String
+  city                  String
+  country               String    @default("Kenya")
+  serviceRadius         Float     @default(10) // km
+  
+  // Settings
+  instantBooking        Boolean   @default(false)
+  minimumNotice         Int       @default(60) // minutes
+  cancellationPolicy    String?
+  
+  // Timestamps
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Relations
+  services              Service[]
+  bookings              Booking[]
+  reviews               Review[]
+  workingHours          WorkingHours[]
+  badges                ProviderBadge[]
+  analytics             ProviderAnalytics[]
+  
+  @@index([category])
+  @@index([city, country])
+  @@index([latitude, longitude])
+  @@index([rating])
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+model WorkingHours {
+  id          String   @id @default(uuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  day         Int      // 0-6 (Sunday-Saturday)
+  isOpen      Boolean  @default(true)
+  openTime    String   // "09:00"
+  closeTime   String   // "18:00"
+  
+  @@unique([providerId, day])
+}
+
+model ProviderBadge {
+  id          String   @id @default(uuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  badgeType   String
+  earnedAt    DateTime @default(now())
+  
+  @@unique([providerId, badgeType])
+}
+
+// ============ SERVICES ============
+
+model Service {
+  id          String   @id @default(uuid())
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  name        String
+  description String   @db.Text
+  category    ServiceCategory
+  subcategory String
+  
+  price       Float
+  currency    Currency @default(KES)
+  duration    Int      // minutes
+  
+  images      String[]
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  bookings    Booking[]
+  subscriptionServices SubscriptionService[]
+  
+  @@index([providerId])
+  @@index([category, subcategory])
+  @@index([price])
+}
+
+enum ServiceCategory {
+  BEAUTY
+  HOME
+  WELLNESS
+  LIFESTYLE
+  DELIVERY
+  TRANSPORT
+}
+
+enum Currency {
+  KES
+  UGX
+  TZS
+  RWF
+  USD
+}
+
+// ============ BOOKINGS ============
+
+model Booking {
+  id              String        @id @default(uuid())
+  customerId      String
+  customer        User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  providerId      String
+  provider        Provider      @relation(fields: [providerId], references: [id])
+  serviceId       String
+  service         Service       @relation(fields: [serviceId], references: [id])
+  
+  status          BookingStatus @default(PENDING)
+  scheduledDate   DateTime
+  scheduledTime   String
+  duration        Int           // minutes
+  
+  // Location (for mobile services)
+  latitude        Float?
+  longitude       Float?
+  address         String?
+  
+  isInstantBooking Boolean      @default(false)
+  notes           String?       @db.Text
+  
+  // Pricing
+  totalAmount     Float
+  currency        Currency      @default(KES)
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  
+  // Cancellation
+  cancelledBy     String?
+  cancellationReason String?
+  
+  // Relations
+  payment         Payment?
+  review          Review?
+  
+  @@index([customerId])
+  @@index([providerId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// ============ PAYMENTS ============
+
+model Payment {
+  id                  String        @id @default(uuid())
+  bookingId           String        @unique
+  booking             Booking       @relation(fields: [bookingId], references: [id])
+  
+  amount              Float
+  currency            Currency      @default(KES)
+  method              PaymentMethod
+  status              PaymentStatus @default(PENDING)
+  
+  // Transaction details
+  transactionId       String?       @unique
+  mpesaReceiptNumber  String?
+  checkoutRequestId   String?       // M-Pesa STK push
+  merchantRequestId   String?
+  
+  // Provider payout
+  providerAmount      Float?        // Amount after commission
+  commissionAmount    Float?
+  payoutStatus        PayoutStatus  @default(PENDING)
+  paidOutAt           DateTime?
+  
+  // Timestamps
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  paidAt              DateTime?
+  
+  @@index([status])
+  @@index([method])
+  @@index([transactionId])
+}
+
+enum PaymentMethod {
+  MPESA
+  AIRTEL_MONEY
+  CARD
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ============ REVIEWS ============
+
+model Review {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id])
+  providerId  String
+  provider    Provider @relation(fields: [providerId], references: [id])
+  
+  rating      Int      // 1-5
+  comment     String   @db.Text
+  images      String[]
+  
+  // Provider response
+  response    String?  @db.Text
+  respondedAt DateTime?
+  
+  isVerified  Boolean  @default(true) // Verified purchase
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([providerId])
+  @@index([rating])
+}
+
+// ============ SUBSCRIPTIONS ============
+
+model SubscriptionPackage {
+  id              String   @id @default(uuid())
+  name            String
+  description     String   @db.Text
+  category        ServiceCategory
+  
+  frequency       SubscriptionFrequency
+  price           Float
+  currency        Currency @default(KES)
+  discountPercent Float    @default(0)
+  
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  services        SubscriptionService[]
+  userSubscriptions UserSubscription[]
+}
+
+model SubscriptionService {
+  id          String              @id @default(uuid())
+  packageId   String
+  package     SubscriptionPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service             @relation(fields: [serviceId], references: [id])
+  quantity    Int                 @default(1)
+  
+  @@unique([packageId, serviceId])
+}
+
+model UserSubscription {
+  id          String              @id @default(uuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id])
+  packageId   String
+  package     SubscriptionPackage @relation(fields: [packageId], references: [id])
+  
+  status      SubscriptionStatus  @default(ACTIVE)
+  startDate   DateTime            @default(now())
+  endDate     DateTime
+  autoRenew   Boolean             @default(true)
+  
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}
+
+enum SubscriptionFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+// ============ LOYALTY & REWARDS ============
+
+model LoyaltyPoints {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  points          Int      @default(0)
+  lifetimePoints  Int      @default(0)
+  tier            LoyaltyTier @default(BRONZE)
+  
+  updatedAt       DateTime @updatedAt
+  
+  transactions    PointsTransaction[]
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+model PointsTransaction {
+  id          String   @id @default(uuid())
+  loyaltyId   String
+  loyalty     LoyaltyPoints @relation(fields: [loyaltyId], references: [id], onDelete: Cascade)
+  
+  points      Int
+  type        PointsType
+  description String
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([loyaltyId])
+}
+
+enum PointsType {
+  EARNED
+  REDEEMED
+  BONUS
+  EXPIRED
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  pointsCost  Int
+  type        RewardType
+  value       Float
+  
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+}
+
+enum RewardType {
+  DISCOUNT
+  FREE_SERVICE
+  CASHBACK
+}
+
+// ============ NOTIFICATIONS ============
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  createdAt DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_REMINDER
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  NEW_REVIEW
+  PROMOTION
+  SOS_ALERT
+  SYSTEM
+}
+
+// ============ ANALYTICS ============
+
+model ProviderAnalytics {
+  id                String   @id @default(uuid())
+  providerId        String
+  provider          Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  date              DateTime @db.Date
+  
+  totalBookings     Int      @default(0)
+  completedBookings Int      @default(0)
+  cancelledBookings Int      @default(0)
+  totalEarnings     Float    @default(0)
+  profileViews      Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  
+  @@unique([providerId, date])
+  @@index([providerId])
+  @@index([date])
+}
+
+// ============ DELIVERY ============
+
+model DeliveryOrder {
+  id              String          @id @default(uuid())
+  customerId      String
+  customer        User            @relation("CustomerDeliveries", fields: [customerId], references: [id])
+  driverId        String?
+  driver          DeliveryDriver? @relation(fields: [driverId], references: [id])
+  
+  // Delivery Type
+  deliveryType    DeliveryType
+  packageSize     PackageSize     @default(SMALL)
+  isFragile       Boolean         @default(false)
+  requiresSignature Boolean       @default(false)
+  
+  // Pickup Location
+  pickupAddress   String
+  pickupLatitude  Float
+  pickupLongitude Float
+  pickupPhone     String
+  pickupInstructions String?
+  
+  // Dropoff Location
+  dropoffAddress  String
+  dropoffLatitude Float
+  dropoffLongitude Float
+  dropoffPhone    String
+  dropoffInstructions String?
+  
+  // Package Details
+  packageDescription String?
+  estimatedWeight Float?          // in kg
+  
+  // Pricing & Status
+  status          DeliveryStatus  @default(PENDING)
+  estimatedFare   Float
+  finalFare       Float?
+  currency        Currency        @default(KES)
+  distance        Float           // in km
+  estimatedDuration Int           // in minutes
+  
+  // Tracking
+  currentLatitude  Float?
+  currentLongitude Float?
+  trackingCode     String         @unique @default(uuid())
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  acceptedAt      DateTime?
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+  @@index([trackingCode])
+}
+
+model DeliveryDriver {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  
+  // Vehicle Info
+  vehicleType     VehicleType
+  vehicleModel    String?
+  vehiclePlate    String
+  vehicleColor    String?
+  
+  // Driver Info
+  licenseNumber   String
+  isVerified      Boolean  @default(false)
+  isOnline        Boolean  @default(false)
+  isAvailable     Boolean  @default(true)
+  
+  // Current Location
+  currentLatitude  Float?
+  currentLongitude Float?
+  lastLocationUpdate DateTime?
+  
+  // Ratings
+  rating          Float    @default(0)
+  totalDeliveries Int      @default(0)
+  totalRides      Int      @default(0)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  deliveries      DeliveryOrder[]
+  rides           RideRequest[]
+  
+  @@index([isOnline, isAvailable])
+  @@index([currentLatitude, currentLongitude])
+  @@index([vehicleType])
+}
+
+enum DeliveryType {
+  PACKAGE
+  FOOD
+  GROCERY
+  DOCUMENT
+  MOVING
+}
+
+enum PackageSize {
+  SMALL       // Fits in hand
+  MEDIUM      // Fits in basket
+  LARGE       // Requires vehicle
+  EXTRA_LARGE // Moving/Furniture
+}
+
+enum DeliveryStatus {
+  PENDING
+  ACCEPTED
+  PICKING_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+// ============ TRANSPORT ============
+
+model RideRequest {
+  id              String      @id @default(uuid())
+  customerId      String
+  driverId        String?
+  driver          DeliveryDriver? @relation(fields: [driverId], references: [id])
+  
+  // Ride Type
+  rideType        RideType
+  
+  // Pickup Location
+  pickupAddress   String
+  pickupLatitude  Float
+  pickupLongitude Float
+  pickupName      String?     // Landmark name
+  
+  // Dropoff Location
+  dropoffAddress  String
+  dropoffLatitude Float
+  dropoffLongitude Float
+  dropoffName     String?     // Landmark name
+  
+  // Additional Stops (for shuttle/shared rides)
+  stops           Json?       // Array of {address, lat, lng, name}
+  
+  // Passengers
+  passengerCount  Int         @default(1)
+  passengerPhone  String?
+  
+  // Pricing & Status
+  status          RideStatus  @default(PENDING)
+  estimatedFare   Float
+  finalFare       Float?
+  currency        Currency    @default(KES)
+  distance        Float       // in km
+  estimatedDuration Int       // in minutes
+  
+  // Surge Pricing
+  surgeMultiplier Float       @default(1.0)
+  
+  // Tracking
+  currentLatitude  Float?
+  currentLongitude Float?
+  
+  // Timestamps
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  acceptedAt      DateTime?
+  arrivedAt       DateTime?   // Driver arrived at pickup
+  startedAt       DateTime?   // Ride started
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  
+  // Cancellation
+  cancelledBy     String?
+  cancellationReason String?
+  cancellationFee Float?
+  
+  @@index([customerId])
+  @@index([driverId])
+  @@index([status])
+}
+
+enum RideType {
+  BODA_BODA       // Motorcycle taxi
+  TUK_TUK         // Three-wheeler
+  TAXI            // Regular car
+  CAR_HIRE        // Private car hire
+  SHUTTLE         // Shared vehicle
+  AIRPORT_TRANSFER
+}
+
+enum RideStatus {
+  PENDING
+  SEARCHING       // Looking for driver
+  ACCEPTED
+  DRIVER_ARRIVING
+  ARRIVED         // Driver at pickup
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum VehicleType {
+  MOTORCYCLE      // Boda boda
+  TUK_TUK         // Three-wheeler
+  CAR             // Regular car
+  SUV             // Larger vehicle
+  VAN             // Mini-van for moving
+  BICYCLE         // For small deliveries
+}
+
+// ============ MARKETPLACE ============
+
+model Shop {
+  id              String    @id @default(uuid())
+  ownerId         String    @unique
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  name            String
+  slug            String    @unique
+  description     String    @db.Text
+  logo            String?
+  banner          String?
+  
+  // Verification
+  isVerified      Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  
+  // Contact
+  phone           String?
+  email           String?
+  whatsapp        String?
+  
+  // Location
+  address         String?
+  city            String?
+  country         String    @default("Kenya")
+  latitude        Float?
+  longitude       Float?
+  
+  // Ratings
+  rating          Float     @default(0)
+  reviewCount     Int       @default(0)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  products        Product[]
+  orders          MarketplaceOrder[]
+  
+  @@index([city])
+  @@index([isActive])
+  @@index([rating])
+}
+
+model Product {
+  id              String    @id @default(uuid())
+  shopId          String
+  shop            Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  name            String
+  slug            String
+  description     String    @db.Text
+  category        ProductCategory
+  subcategory     String?
+  
+  // Pricing
+  price           Float
+  comparePrice    Float?    // Original price for discounts
+  currency        Currency  @default(KES)
+  
+  // Inventory
+  sku             String?
+  barcode         String?
+  quantity        Int       @default(0)
+  trackQuantity   Boolean   @default(true)
+  allowBackorder  Boolean   @default(false)
+  
+  // Media
+  images          String[]
+  thumbnail       String?
+  
+  // Attributes
+  weight          Float?    // in kg
+  dimensions      Json?     // {length, width, height}
+  variants        Json?     // [{name, options, price}]
+  tags            String[]
+  
+  // Status
+  isActive        Boolean   @default(true)
+  isFeatured      Boolean   @default(false)
+  
+  // Ratings
+  rating          Float     @default(0)
+  reviewCount     Int       @default(0)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  reviews         ProductReview[]
+  
+  @@unique([shopId, slug])
+  @@index([category])
+  @@index([price])
+  @@index([isActive, isFeatured])
+  @@index([rating])
+}
+
+enum ProductCategory {
+  ELECTRONICS
+  FASHION
+  HOME_GARDEN
+  HEALTH_BEAUTY
+  SPORTS_OUTDOORS
+  FOOD_BEVERAGES
+  AUTOMOTIVE
+  BOOKS_MEDIA
+  TOYS_GAMES
+  SERVICES
+  OTHER
+}
+
+model Cart {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  items           CartItem[]
+}
+
+model CartItem {
+  id              String    @id @default(uuid())
+  cartId          String
+  cart            Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  quantity        Int       @default(1)
+  variant         Json?     // Selected variant options
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([cartId, productId])
+  @@index([cartId])
+}
+
+model MarketplaceOrder {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique @default(uuid())
+  customerId      String
+  customer        User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  shopId          String
+  shop            Shop          @relation(fields: [shopId], references: [id])
+  
+  status          OrderStatus   @default(PENDING)
+  
+  // Amounts
+  subtotal        Float
+  shippingFee     Float         @default(0)
+  tax             Float         @default(0)
+  discount        Float         @default(0)
+  total           Float
+  currency        Currency      @default(KES)
+  
+  // Shipping
+  shippingMethod  ShippingMethod @default(DELIVERY)
+  shippingAddress String?
+  shippingCity    String?
+  shippingPhone   String?
+  shippingNotes   String?
+  
+  // Tracking
+  trackingNumber  String?
+  estimatedDelivery DateTime?
+  
+  // Payment
+  paymentMethod   PaymentMethod @default(MPESA)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paidAt          DateTime?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  confirmedAt     DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  
+  // Relations
+  items           OrderItem[]
+  
+  @@index([customerId])
+  @@index([shopId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id              String    @id @default(uuid())
+  orderId         String
+  order           MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id])
+  
+  name            String    // Snapshot of product name
+  price           Float     // Snapshot of price at purchase
+  quantity        Int
+  variant         Json?     // Selected variant
+  
+  @@index([orderId])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ShippingMethod {
+  PICKUP          // Customer picks up
+  DELIVERY        // Standard delivery
+  EXPRESS         // Express delivery
+  BODA_DELIVERY   // Boda boda delivery
+}
+
+model ProductReview {
+  id              String    @id @default(uuid())
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rating          Int       // 1-5
+  title           String?
+  comment         String?   @db.Text
+  images          String[]
+  
+  isVerifiedPurchase Boolean @default(false)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([rating])
+}

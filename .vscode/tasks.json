@@ -1,0 +1,53 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Server Dependencies",
+			"type": "shell",
+			"command": "cd server && npm install",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Install Client Dependencies",
+			"type": "shell",
+			"command": "cd client && npm install",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Install Form Dependencies",
+			"type": "shell",
+			"command": "cd client && npm install react-hook-form @hookform/resolvers zod",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Generate Prisma Client",
+			"type": "shell",
+			"command": "cd server && npx prisma generate",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run Backend Server",
+			"type": "shell",
+			"command": "cd server && npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "Run Frontend Client",
+			"type": "shell",
+			"command": "cd client && npm run dev",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "none"
+		}
+	]
+}
