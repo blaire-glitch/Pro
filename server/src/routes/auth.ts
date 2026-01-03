@@ -13,13 +13,13 @@ function generateTokens(userId: string, role: string) {
   const accessToken = jwt.sign(
     { userId, role },
     process.env.JWT_SECRET as string,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '15m' } as jwt.SignOptions
   );
 
   const refreshToken = jwt.sign(
     { userId, tokenId: uuidv4() },
     process.env.JWT_REFRESH_SECRET as string,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' } as jwt.SignOptions
   );
 
   return { accessToken, refreshToken };

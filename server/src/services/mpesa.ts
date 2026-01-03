@@ -78,7 +78,7 @@ class MpesaService {
         }
       );
 
-      this.accessToken = response.data.access_token;
+      this.accessToken = response.data.access_token || '';
       // Token expires in 1 hour, refresh 5 minutes before
       this.tokenExpiry = Date.now() + (55 * 60 * 1000);
 
