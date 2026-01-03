@@ -1,7 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/dashboard/notifications/page": "app/dashboard/notifications/page.js",
-  "/dashboard/settings/page": "app/dashboard/settings/page.js",
-  "/search/page": "app/search/page.js",
-  "/provider/[id]/page": "app/provider/[id]/page.js"
-}
+{}
