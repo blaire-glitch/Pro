@@ -1,19 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { BookingModal } from '@/components/booking/BookingModal';
+import { providersApi } from '@/lib/api';
 import {
   HiStar, HiLocationMarker, HiBadgeCheck, HiShare,
   HiHeart, HiPhone, HiChat, HiClock, HiCalendar,
   HiShieldCheck, HiThumbUp, HiPhotograph
 } from 'react-icons/hi';
 
-// Mock provider data
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  category: string;
+}
+
+interface Provider {
+  id: string;
+  businessName: string;
+  category: string;
+  bio: string;
+  rating: number;
+  reviewCount: number;
+  completedBookings: number;
+  location: string;
+  latitude: number;
+  longitude: number;
+  avatar: string;
+  coverImage: string;
+  isVerified: boolean;
+  instantBooking: boolean;
+  user: {
+    firstName: string;
+    lastName: string;
+    avatar: string;
+  };
+  services: Service[];
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  customer: {
+    firstName: string;
+    lastName: string;
+    avatar: string;
+  };
+  service: {
+    name: string;
+  };
+}
+
+// Fallback mock data for when API fails or for demo purposes
 const mockProvider = {
   id: '1',
   businessName: 'Wanjiku Beauty Studio',
@@ -21,7 +69,7 @@ const mockProvider = {
   category: 'Beauty',
   rating: 4.8,
   reviewCount: 127,
-  completedJobs: 450,
+  completedBookings: 450,
   location: 'Westlands, Nairobi',
   fullAddress: 'Westgate Mall, 2nd Floor, Westlands, Nairobi',
   coordinates: { lat: -1.2635, lng: 36.8058 },
@@ -33,6 +81,7 @@ const mockProvider = {
     'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800',
   ],
   isVerified: true,
+  instantBooking: true,
   yearsExperience: 8,
   responseTime: '< 1 hour',
   bio: 'Professional hairstylist with 8+ years of experience. Specializing in African hair braiding, dreadlocks, and natural hair care. I bring the salon experience to your doorstep!',

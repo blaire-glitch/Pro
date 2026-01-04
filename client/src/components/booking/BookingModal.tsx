@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { HiX, HiCalendar, HiClock, HiLocationMarker, HiCash, HiCheck, HiHome, HiOfficeBuilding } from 'react-icons/hi';
 import { format, addDays } from 'date-fns';
+import toast from 'react-hot-toast';
+import { bookingsApi, paymentsApi } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 interface BookingModalProps {
   provider: {
@@ -42,6 +46,10 @@ export function BookingModal({ provider, service, onClose }: BookingModalProps) 
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { user, isAuthenticated } = useAuthStore();
+  const router = useRouter();
 
   // Generate next 14 days for date selection
   const dates = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i));
@@ -58,19 +66,59 @@ export function BookingModal({ provider, service, onClose }: BookingModalProps) 
     else if (step === 'confirm') setStep('payment');
   };
 
-  const handleConfirmBooking = () => {
-    // TODO: Implement actual booking
-    console.log('Booking confirmed:', {
-      service,
-      provider,
-      date: selectedDate,
-      time: selectedTime,
-      locationType,
-      address,
-      paymentMethod,
-      notes,
-    });
-    onClose();
+  const handleConfirmBooking = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please log in to book a service');
+      router.push(`/login?redirect=/provider/${provider.id}`);
+      return;
+    }
+
+    if (!selectedDate || !selectedTime) {
+      toast.error('Please select a date and time');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Create the booking
+      const bookingResponse = await bookingsApi.create({
+        serviceId: service.id,
+        scheduledDate: format(selectedDate, 'yyyy-MM-dd'),
+        scheduledTime: selectedTime,
+        notes: notes || undefined,
+        address: locationType === 'home' ? address : provider.location,
+      });
+
+      const booking = bookingResponse.data.data;
+
+      // If payment method is not cash, initiate payment
+      if (paymentMethod && paymentMethod !== 'cash') {
+        try {
+          await paymentsApi.initiate({
+            bookingId: booking.id,
+            method: paymentMethod as 'mpesa' | 'airtel_money' | 'card',
+            phone: phone || undefined,
+          });
+          toast.success('Booking created! Check your phone for payment prompt.');
+        } catch (paymentError) {
+          console.error('Payment initiation failed:', paymentError);
+          toast.success('Booking created! Please complete payment later.');
+        }
+      } else {
+        toast.success('Booking created successfully! Pay in cash on arrival.');
+      }
+
+      onClose();
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Booking failed:', error);
+      const message = error.response?.data?.error || 'Failed to create booking. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -369,9 +417,20 @@ export function BookingModal({ provider, service, onClose }: BookingModalProps) 
             ) : (
               <button
                 onClick={handleConfirmBooking}
-                className="btn-primary"
+                disabled={isSubmitting}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Confirm Booking
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  'Confirm Booking'
+                )}
               </button>
             )}
           </div>
