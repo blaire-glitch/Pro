@@ -139,14 +139,86 @@ const mockReviews = [
 
 export default function ProviderPage() {
   const params = useParams();
+  const router = useRouter();
+  const providerId = params.id as string;
+  
+  const [provider, setProvider] = useState<Provider | typeof mockProvider | null>(null);
+  const [reviews, setReviews] = useState<Review[] | typeof mockReviews>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'services' | 'reviews' | 'gallery'>('services');
-  const [selectedService, setSelectedService] = useState<typeof mockProvider.services[0] | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | typeof mockProvider.services[0] | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
 
-  const handleBookService = (service: typeof mockProvider.services[0]) => {
+  useEffect(() => {
+    const fetchProvider = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch provider details from API
+        const providerResponse = await providersApi.getById(providerId);
+        const providerData = providerResponse.data.data;
+        setProvider(providerData);
+        
+        // Fetch reviews
+        try {
+          const reviewsResponse = await providersApi.getReviews(providerId);
+          setReviews(reviewsResponse.data.data || []);
+        } catch (err) {
+          console.log('No reviews found, using mock data');
+          setReviews(mockReviews);
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch provider, using mock data:', err);
+        // Use mock data as fallback
+        setProvider({ ...mockProvider, id: providerId });
+        setReviews(mockReviews);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (providerId) {
+      fetchProvider();
+    }
+  }, [providerId]);
+
+  const handleBookService = (service: Service | typeof mockProvider.services[0]) => {
     setSelectedService(service);
     setShowBookingModal(true);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pt-16">
+          <div className="h-64 md:h-80 bg-gray-200 animate-pulse" />
+          <div className="container mx-auto px-4">
+            <div className="relative -mt-20 bg-white rounded-2xl shadow-xl p-6 md:p-8">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-gray-200 rounded-2xl animate-pulse mx-auto md:mx-0" />
+                <div className="flex-1 space-y-4">
+                  <div className="h-8 bg-gray-200 rounded animate-pulse w-64 mx-auto md:mx-0" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-48 mx-auto md:mx-0" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-full max-w-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Use loaded provider or fallback to mock
+  const displayProvider = provider || mockProvider;
+  const displayReviews = reviews.length > 0 ? reviews : mockReviews;
+  
+  // Get cover image and avatar with fallbacks
+  const coverImage = (displayProvider as any).coverImage || (displayProvider as any).image || mockProvider.image;
+  const avatar = displayProvider.avatar || mockProvider.avatar;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -156,8 +228,8 @@ export default function ProviderPage() {
         {/* Cover Image */}
         <div className="relative h-64 md:h-80 bg-gray-200">
           <Image
-            src={mockProvider.image}
-            alt={mockProvider.businessName}
+            src={coverImage}
+            alt={displayProvider.businessName}
             fill
             className="object-cover"
           />
@@ -172,12 +244,12 @@ export default function ProviderPage() {
               <div className="flex-shrink-0">
                 <div className="relative mx-auto md:mx-0 w-32 h-32 md:w-40 md:h-40">
                   <Image
-                    src={mockProvider.avatar}
+                    src={avatar}
                     alt=""
                     fill
                     className="rounded-2xl object-cover border-4 border-white shadow-lg"
                   />
-                  {mockProvider.isVerified && (
+                  {displayProvider.isVerified && (
                     <div className="absolute -bottom-2 -right-2 bg-primary-500 text-white p-2 rounded-full">
                       <HiBadgeCheck className="w-6 h-6" />
                     </div>
@@ -189,36 +261,45 @@ export default function ProviderPage() {
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-2 mb-2">
                   <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900">
-                    {mockProvider.businessName}
+                    {displayProvider.businessName}
                   </h1>
-                  {mockProvider.badges.map((badge) => (
-                    <span key={badge} className="badge badge-primary text-xs">{badge}</span>
-                  ))}
+                  {(displayProvider as any).badges?.map((badge: any) => {
+                    // Handle both string badges (mock data) and object badges (API data)
+                    const badgeLabel = typeof badge === 'string' 
+                      ? badge 
+                      : badge.badgeType?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                    const badgeKey = typeof badge === 'string' ? badge : badge.id;
+                    return (
+                      <span key={badgeKey} className="badge badge-primary text-xs">{badgeLabel}</span>
+                    );
+                  })}
                 </div>
                 
-                <p className="text-gray-600 mb-4">{mockProvider.tagline}</p>
+                <p className="text-gray-600 mb-4">{(displayProvider as any).tagline || `${displayProvider.category} Services`}</p>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600 mb-4">
                   <div className="flex items-center gap-1">
                     <HiStar className="w-5 h-5 text-yellow-500" />
-                    <span className="font-semibold text-gray-900">{mockProvider.rating}</span>
-                    <span>({mockProvider.reviewCount} reviews)</span>
+                    <span className="font-semibold text-gray-900">{displayProvider.rating?.toFixed(1) || '0.0'}</span>
+                    <span>({displayProvider.reviewCount || 0} reviews)</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <HiLocationMarker className="w-5 h-5 text-gray-400" />
-                    <span>{mockProvider.location}</span>
+                    <span>{(displayProvider as any).location || `${(displayProvider as any).address || ''}, ${(displayProvider as any).city || ''}`.replace(/^, |, $/g, '') || 'Location not specified'}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <HiThumbUp className="w-5 h-5 text-gray-400" />
-                    <span>{mockProvider.completedJobs}+ jobs</span>
+                    <span>{(displayProvider as any).completedBookings || (displayProvider as any).completedJobs || 0}+ jobs</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <HiClock className="w-5 h-5 text-gray-400" />
-                    <span>Responds {mockProvider.responseTime}</span>
-                  </div>
+                  {(displayProvider as any).responseTime && (
+                    <div className="flex items-center gap-1">
+                      <HiClock className="w-5 h-5 text-gray-400" />
+                      <span>Responds {(displayProvider as any).responseTime}</span>
+                    </div>
+                  )}
                 </div>
 
-                <p className="text-gray-600 max-w-2xl">{mockProvider.bio}</p>
+                <p className="text-gray-600 max-w-2xl">{(displayProvider as any).bio || (displayProvider as any).description}</p>
               </div>
 
               {/* Actions */}
@@ -255,7 +336,7 @@ export default function ProviderPage() {
                   {tab}
                   {tab === 'reviews' && (
                     <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                      {mockProvider.reviewCount}
+                      {displayProvider.reviewCount || displayReviews.length}
                     </span>
                   )}
                 </button>
@@ -267,36 +348,42 @@ export default function ProviderPage() {
               {/* Services Tab */}
               {activeTab === 'services' && (
                 <div className="grid gap-4">
-                  {mockProvider.services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{service.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <HiClock className="w-4 h-4" />
-                            {Math.floor(service.duration / 60)}h {service.duration % 60}m
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-semibold text-lg text-gray-900">
-                            KSh {service.price.toLocaleString()}
+                  {displayProvider.services && displayProvider.services.length > 0 ? (
+                    displayProvider.services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 mb-1">{service.name}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{service.description}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <HiClock className="w-4 h-4" />
+                              {Math.floor(service.duration / 60)}h {service.duration % 60}m
+                            </span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleBookService(service)}
-                          className="btn-primary whitespace-nowrap"
-                        >
-                          Book Now
-                        </button>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="font-semibold text-lg text-gray-900">
+                              KSh {service.price.toLocaleString()}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleBookService(service)}
+                            className="btn-primary whitespace-nowrap"
+                          >
+                            Book Now
+                          </button>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 bg-white rounded-xl">
+                      <p className="text-gray-500">No services available yet.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -307,23 +394,23 @@ export default function ProviderPage() {
                   <div className="bg-white rounded-xl p-6 shadow-sm">
                     <div className="flex items-center gap-8">
                       <div className="text-center">
-                        <div className="text-5xl font-bold text-gray-900 mb-1">{mockProvider.rating}</div>
+                        <div className="text-5xl font-bold text-gray-900 mb-1">{displayProvider.rating?.toFixed(1) || '0.0'}</div>
                         <div className="flex justify-center text-yellow-500 mb-1">
                           {[...Array(5)].map((_, i) => (
-                            <HiStar key={i} className={`w-5 h-5 ${i < Math.floor(mockProvider.rating) ? 'fill-current' : ''}`} />
+                            <HiStar key={i} className={`w-5 h-5 ${i < Math.floor(displayProvider.rating || 0) ? 'fill-current' : 'text-gray-300'}`} />
                           ))}
                         </div>
-                        <div className="text-sm text-gray-500">{mockProvider.reviewCount} reviews</div>
+                        <div className="text-sm text-gray-500">{displayProvider.reviewCount || displayReviews.length} reviews</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Reviews List */}
-                  {mockReviews.map((review) => (
+                  {displayReviews.map((review: any) => (
                     <div key={review.id} className="bg-white rounded-xl p-6 shadow-sm">
                       <div className="flex items-start gap-4">
                         <Image
-                          src={review.user.avatar}
+                          src={review.user?.avatar || review.customer?.avatar || `https://ui-avatars.com/api/?name=${review.customer?.firstName || 'User'}&background=random`}
                           alt=""
                           width={48}
                           height={48}
@@ -331,21 +418,23 @@ export default function ProviderPage() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900">{review.user.name}</span>
-                            <span className="text-sm text-gray-500">• {review.date}</span>
+                            <span className="font-semibold text-gray-900">
+                              {review.user?.name || `${review.customer?.firstName || ''} ${review.customer?.lastName?.charAt(0) || ''}.`}
+                            </span>
+                            <span className="text-sm text-gray-500">• {review.date || new Date(review.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="flex items-center gap-2 mb-2">
                             <div className="flex text-yellow-500">
                               {[...Array(5)].map((_, i) => (
-                                <HiStar key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : ''}`} />
+                                <HiStar key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300'}`} />
                               ))}
                             </div>
-                            <span className="text-sm text-gray-500">for {review.service}</span>
+                            <span className="text-sm text-gray-500">for {review.service?.name || review.service}</span>
                           </div>
                           <p className="text-gray-600">{review.comment}</p>
-                          {review.photos.length > 0 && (
+                          {review.photos && review.photos.length > 0 && (
                             <div className="flex gap-2 mt-3">
-                              {review.photos.map((photo, i) => (
+                              {review.photos.map((photo: string, i: number) => (
                                 <Image
                                   key={i}
                                   src={photo}
@@ -367,7 +456,7 @@ export default function ProviderPage() {
               {/* Gallery Tab */}
               {activeTab === 'gallery' && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {mockProvider.coverImages.map((image, i) => (
+                  {((displayProvider as any).coverImages || [coverImage]).map((image: string, i: number) => (
                     <div key={i} className="relative aspect-square rounded-xl overflow-hidden">
                       <Image
                         src={image}
@@ -389,7 +478,12 @@ export default function ProviderPage() {
       {/* Booking Modal */}
       {showBookingModal && selectedService && (
         <BookingModal
-          provider={mockProvider}
+          provider={{
+            id: displayProvider.id,
+            businessName: displayProvider.businessName,
+            avatar: avatar,
+            location: (displayProvider as any).location || `${(displayProvider as any).address || ''}, ${(displayProvider as any).city || ''}`.replace(/^, |, $/g, '') || 'Location not specified',
+          }}
           service={selectedService}
           onClose={() => setShowBookingModal(false)}
         />

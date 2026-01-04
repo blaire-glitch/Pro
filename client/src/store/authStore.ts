@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/types';
-import { api } from '@/lib/api';
+import axios from 'axios';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Separate axios instance for auth to avoid circular dependency
+const authAxios = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
 
 interface AuthState {
   user: User | null;
@@ -73,23 +84,12 @@ export const useAuthStore = create<AuthState>()(
           },
         };
 
-        // Check demo accounts first
-        const demoAccount = demoAccounts[email];
-        if (demoAccount && demoAccount.password === password) {
-          set({
-            user: demoAccount.user,
-            accessToken: 'demo-token-' + Date.now(),
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return;
-        }
-
+        // Try API login first
         try {
-          const response = await api.post('/auth/login', { email, password });
+          const response = await authAxios.post('/auth/login', { email, password });
           const { user, accessToken, refreshToken } = response.data.data;
           
-          // Store refresh token in httpOnly cookie is handled by backend
+          // Store refresh token in localStorage
           localStorage.setItem('refreshToken', refreshToken);
           
           set({
@@ -98,15 +98,29 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
+          return;
         } catch (error: any) {
-          // If API fails and it's a demo account with wrong password
-          if (demoAccounts[email]) {
+          // If API fails, try demo accounts as fallback
+          const demoAccount = demoAccounts[email];
+          if (demoAccount && demoAccount.password === password) {
+            set({
+              user: demoAccount.user,
+              accessToken: 'demo-token-' + Date.now(),
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return;
+          }
+          
+          // Check if it's a demo account with wrong password
+          if (demoAccount) {
             set({
               error: 'Invalid password for demo account',
               isLoading: false,
             });
             throw new Error('Invalid password');
           }
+          
           set({
             error: error.response?.data?.message || 'Login failed',
             isLoading: false,
@@ -118,7 +132,7 @@ export const useAuthStore = create<AuthState>()(
       register: async (data: RegisterData) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post('/auth/register', data);
+          const response = await authAxios.post('/auth/register', data);
           const { user, accessToken, refreshToken } = response.data.data;
           
           localStorage.setItem('refreshToken', refreshToken);
@@ -154,7 +168,7 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('No refresh token');
           }
 
-          const response = await api.post('/auth/refresh', { refreshToken });
+          const response = await authAxios.post('/auth/refresh', { refreshToken });
           const { accessToken, refreshToken: newRefreshToken } = response.data.data;
           
           localStorage.setItem('refreshToken', newRefreshToken);
