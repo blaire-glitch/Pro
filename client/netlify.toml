@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_PUBLIC_API_URL = "https://imaginative-joy-production.up.railway.app/api"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://imaginative-joy-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
