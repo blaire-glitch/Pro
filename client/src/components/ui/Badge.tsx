@@ -35,7 +35,9 @@ const iconMap = {
   clock: HiClock,
   location: HiLocationMarker,
   star: HiStar,
-};
+} as const;
+
+type IconMapKey = keyof typeof iconMap;
 
 export function Badge({
   children,
@@ -44,7 +46,9 @@ export function Badge({
   icon,
   className,
 }: BadgeProps) {
-  const IconComponent = typeof icon === 'string' ? iconMap[icon] : null;
+  const IconComponent = typeof icon === 'string' && icon in iconMap 
+    ? iconMap[icon as IconMapKey] 
+    : null;
 
   return (
     <span

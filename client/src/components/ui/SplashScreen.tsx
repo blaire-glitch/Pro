@@ -47,7 +47,7 @@ export function SplashScreen() {
 
       {/* Logo */}
       <div className="relative z-10 animate-bounce-slow">
-        <Logo size="xl" variant="white" />
+        <Logo size="xl" />
       </div>
 
       {/* Tagline */}

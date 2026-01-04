@@ -10,15 +10,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'ui-avatars.com',
       },
-    ],
-  },
-  async rewrites() {
-    return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:5000/api/:path*',
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
       },
-    ];
+    ],
+    unoptimized: true,
+  },
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://imaginative-joy-production.up.railway.app/api',
   },
 };
 

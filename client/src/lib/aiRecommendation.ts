@@ -1,7 +1,7 @@
 // AI Recommendation Engine for Afrionex
 // Uses collaborative filtering and content-based recommendations
 
-interface ServiceData {
+export interface ServiceData {
   id: string;
   name: string;
   category: string;
@@ -12,7 +12,7 @@ interface ServiceData {
   tags: string[];
 }
 
-interface AdData {
+export interface AdData {
   id: string;
   title: string;
   description: string;
@@ -26,7 +26,7 @@ interface AdData {
   sponsor: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   viewedCategories: Record<string, number>;
   searchHistory: string[];
   bookingHistory: string[];
