@@ -58,7 +58,7 @@ export async function subscribeToPush(registration: ServiceWorkerRegistration): 
     
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey,
+      applicationServerKey: applicationServerKey as BufferSource,
     });
     
     console.log('Push subscription:', subscription);
@@ -183,15 +183,9 @@ export function createNotification(notification: AfriNotification): Notification
     icon: notification.icon || icons[notification.type] || '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',
     tag: notification.type,
-    renotify: true,
     data: {
       url: notification.url || '/',
       ...notification.data,
     },
-    vibrate: [100, 50, 100],
-    actions: [
-      { action: 'open', title: 'View' },
-      { action: 'close', title: 'Dismiss' },
-    ],
-  };
+  } as NotificationOptions;
 }

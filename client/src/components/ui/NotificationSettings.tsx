@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiBell, HiBellSlash, HiCheck, HiExclamation } from 'react-icons/hi';
+import { HiBell, HiCheck, HiExclamation, HiX } from 'react-icons/hi';
 import { useAuthStore } from '@/store/authStore';
 import {
   isPushSupported,
@@ -138,7 +138,7 @@ export function NotificationSettings({ compact = false }: NotificationSettingsPr
           </>
         ) : (
           <>
-            <HiBellSlash className="w-5 h-5" />
+            <HiX className="w-5 h-5" />
             <span>Enable Notifications</span>
           </>
         )}
@@ -162,7 +162,7 @@ export function NotificationSettings({ compact = false }: NotificationSettingsPr
           {isSubscribed ? (
             <HiBell className="w-6 h-6 text-primary-600" />
           ) : (
-            <HiBellSlash className="w-6 h-6 text-gray-400" />
+            <HiX className="w-6 h-6 text-gray-400" />
           )}
         </div>
       </div>
