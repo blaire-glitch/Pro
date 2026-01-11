@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -12,9 +12,12 @@ import {
   HiFilter,
   HiCalendar,
   HiDownload,
-  HiChevronDown
+  HiChevronDown,
+  HiRefresh
 } from 'react-icons/hi';
 import { SubscriptionGuard } from '@/components/guards/SubscriptionGuard';
+import { walletApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface Transaction {
   id: string;
@@ -29,114 +32,6 @@ interface Transaction {
   reference: string;
 }
 
-const transactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'sent',
-    amount: 500,
-    description: 'Money Transfer',
-    recipient: 'Jane Achieng',
-    date: '2026-01-03',
-    time: '14:30',
-    status: 'completed',
-    reference: 'TXN123456789'
-  },
-  {
-    id: '2',
-    type: 'received',
-    amount: 2500,
-    description: 'Payment Received',
-    sender: 'Peter Odhiambo',
-    date: '2026-01-03',
-    time: '10:15',
-    status: 'completed',
-    reference: 'TXN123456788'
-  },
-  {
-    id: '3',
-    type: 'topup',
-    amount: 5000,
-    description: 'M-Pesa Top Up',
-    date: '2026-01-02',
-    time: '16:45',
-    status: 'completed',
-    reference: 'TXN123456787'
-  },
-  {
-    id: '4',
-    type: 'payment',
-    amount: 1200,
-    description: 'KPLC Token Purchase',
-    date: '2026-01-02',
-    time: '09:20',
-    status: 'completed',
-    reference: 'TXN123456786'
-  },
-  {
-    id: '5',
-    type: 'sent',
-    amount: 800,
-    description: 'Money Transfer',
-    recipient: 'Mary Wanjiku',
-    date: '2026-01-01',
-    time: '18:00',
-    status: 'completed',
-    reference: 'TXN123456785'
-  },
-  {
-    id: '6',
-    type: 'withdrawal',
-    amount: 3000,
-    description: 'Cash Withdrawal',
-    date: '2026-01-01',
-    time: '12:30',
-    status: 'completed',
-    reference: 'TXN123456784'
-  },
-  {
-    id: '7',
-    type: 'received',
-    amount: 1500,
-    description: 'Service Payment',
-    sender: 'Afrionex Rewards',
-    date: '2025-12-31',
-    time: '23:59',
-    status: 'completed',
-    reference: 'TXN123456783'
-  },
-  {
-    id: '8',
-    type: 'payment',
-    amount: 450,
-    description: 'Safaricom Airtime',
-    date: '2025-12-31',
-    time: '15:20',
-    status: 'completed',
-    reference: 'TXN123456782'
-  },
-  {
-    id: '9',
-    type: 'sent',
-    amount: 2000,
-    description: 'Money Transfer',
-    recipient: 'John Kamau',
-    date: '2025-12-30',
-    time: '11:45',
-    status: 'failed',
-    reference: 'TXN123456781'
-  },
-  {
-    id: '10',
-    type: 'topup',
-    amount: 10000,
-    description: 'Bank Transfer',
-    date: '2025-12-30',
-    time: '08:00',
-    status: 'completed',
-    reference: 'TXN123456780'
-  }
-];
-
 const filterOptions = [
   { value: 'all', label: 'All Transactions' },
   { value: 'sent', label: 'Sent' },
@@ -147,10 +42,58 @@ const filterOptions = [
 ];
 
 export default function TransactionHistoryPage() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [page, filterType]);
+
+  const fetchTransactions = async () => {
+    setIsLoading(true);
+    try {
+      const typeMap: Record<string, string> = {
+        'sent': 'SEND',
+        'received': 'RECEIVE',
+        'topup': 'TOPUP',
+        'payment': 'PAYMENT',
+        'withdrawal': 'WITHDRAW'
+      };
+      
+      const response = await walletApi.getTransactions({
+        page,
+        limit: 20,
+        type: filterType !== 'all' ? typeMap[filterType] : undefined
+      });
+      
+      const mappedTransactions = response.data.transactions.map((tx: any) => ({
+        id: tx.id,
+        type: tx.type.toLowerCase() as Transaction['type'],
+        amount: tx.amount,
+        description: tx.description || tx.type,
+        recipient: tx.recipientId,
+        sender: tx.senderId,
+        date: new Date(tx.createdAt).toISOString().split('T')[0],
+        time: new Date(tx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        status: tx.status.toLowerCase() as Transaction['status'],
+        reference: tx.reference || tx.id.slice(0, 12).toUpperCase()
+      }));
+      
+      setTransactions(mappedTransactions);
+      setTotalPages(Math.ceil(response.data.total / 20));
+    } catch (error: any) {
+      console.error('Failed to fetch transactions:', error);
+      toast.error('Failed to load transactions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredTransactions = transactions.filter(tx => {
     const matchesSearch = 

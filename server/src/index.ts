@@ -19,6 +19,7 @@ import { notificationsRouter } from './routes/notifications.js';
 import { searchRouter } from './routes/search.js';
 import { subscriptionsRouter } from './routes/subscriptions.js';
 import { analyticsRouter } from './routes/analytics.js';
+import { walletRouter } from './routes/wallet.js';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/wallet', walletRouter);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

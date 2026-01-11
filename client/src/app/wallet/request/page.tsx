@@ -6,6 +6,7 @@ import { HiArrowLeft, HiClipboard, HiShare, HiQrcode, HiUserGroup, HiClock } fro
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import toast from 'react-hot-toast';
+import { walletApi } from '@/lib/api';
 
 const recentContacts = [
   { id: 1, name: 'John Ochieng', phone: '+254 712 345 678', avatar: 'JO' },
@@ -24,8 +25,9 @@ export default function RequestMoneyPage() {
   const [note, setNote] = useState('');
   const [selectedContact, setSelectedContact] = useState<number | null>(null);
   const [requestMethod, setRequestMethod] = useState<'contact' | 'link' | 'qr'>('contact');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast.error('Please enter a valid amount');
       return;
@@ -36,10 +38,28 @@ export default function RequestMoneyPage() {
       return;
     }
 
-    toast.success(`Request for KES ${parseFloat(amount).toLocaleString()} sent!`);
-    setAmount('');
-    setNote('');
-    setSelectedContact(null);
+    const contact = recentContacts.find(c => c.id === selectedContact);
+    if (!contact) {
+      toast.error('Please select a contact');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await walletApi.requestMoney({ 
+        fromPhone: contact.phone, 
+        amount: parseFloat(amount), 
+        note: note || undefined 
+      });
+      toast.success(`Request for KES ${parseFloat(amount).toLocaleString()} sent!`);
+      setAmount('');
+      setNote('');
+      setSelectedContact(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to send request');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCopyLink = () => {

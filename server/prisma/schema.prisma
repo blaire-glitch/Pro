@@ -50,6 +50,7 @@ model User {
   cart              Cart?
   marketplaceOrders MarketplaceOrder[] @relation("CustomerOrders")
   productReviews    ProductReview[]
+  wallet            Wallet?
   
   @@index([email])
   @@index([phone])
@@ -507,6 +508,8 @@ enum NotificationType {
   BOOKING_REMINDER
   BOOKING_CANCELLED
   PAYMENT_RECEIVED
+  PAYMENT_SENT
+  MONEY_REQUEST
   NEW_REVIEW
   PROMOTION
   SOS_ALERT
@@ -1002,4 +1005,70 @@ model ProductReview {
   @@unique([productId, userId])
   @@index([productId])
   @@index([rating])
+}
+
+// ============ WALLET ============
+
+model Wallet {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance         Float     @default(0)
+  currency        String    @default("KES")
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  transactions    WalletTransaction[]
+  
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id              String    @id @default(uuid())
+  walletId        String
+  wallet          Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  type            WalletTransactionType
+  amount          Float
+  currency        String    @default("KES")
+  status          TransactionStatus @default(PENDING)
+  
+  description     String?
+  reference       String?
+  
+  // For transfers
+  senderId        String?
+  recipientId     String?
+  
+  // Additional metadata
+  metadata        Json?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum WalletTransactionType {
+  TOPUP
+  WITHDRAW
+  SEND
+  RECEIVE
+  PAYMENT
+  REFUND
+  BILL_PAYMENT
+  CASHBACK
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

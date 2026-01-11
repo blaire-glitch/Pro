@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { HiArrowLeft, HiSearch, HiUser, HiPhone, HiCheck, HiClock } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import { SubscriptionGuard } from '@/components/guards/SubscriptionGuard';
+import { walletApi } from '@/lib/api';
 
 const recentContacts = [
   { id: '1', name: 'John Ochieng', phone: '0712 345 678', avatar: 'JO', color: 'bg-blue-500' },
@@ -70,12 +71,21 @@ export default function SendMoneyPage() {
   const handleSend = async () => {
     setIsProcessing(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    toast.success(`KES ${parseInt(amount).toLocaleString()} sent to ${selectedContact?.name}!`);
-    router.push('/wallet');
+    try {
+      const response = await walletApi.sendMoney({
+        recipientPhone: phoneNumber.startsWith('0') ? `+254${phoneNumber.slice(1)}` : phoneNumber,
+        amount: parseFloat(amount),
+        note: note || undefined,
+      });
+      
+      toast.success(response.data.data?.message || `KES ${parseInt(amount).toLocaleString()} sent to ${selectedContact?.name}!`);
+      router.push('/wallet');
+    } catch (error: any) {
+      const message = error.response?.data?.error || 'Failed to send money. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const goBack = () => {

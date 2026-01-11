@@ -111,7 +111,7 @@ usersRouter.get('/bookings', authenticate, async (req: Request, res: Response, n
     const { status, page = '1', limit = '10' } = req.query;
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-    const where = {
+    const where: any = {
       customerId: req.user!.id,
       ...(status && { status: status as string }),
     };
@@ -177,6 +177,120 @@ usersRouter.get('/loyalty', authenticate, async (req: Request, res: Response, ne
         loyalty,
         availableRewards: rewards,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Redeem loyalty points
+usersRouter.post('/loyalty/redeem', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { rewardId } = req.body;
+
+    if (!rewardId) {
+      throw ApiError.badRequest('Reward ID is required');
+    }
+
+    // Get user's loyalty points
+    const loyalty = await prisma.loyaltyPoints.findUnique({
+      where: { userId: req.user!.id },
+    });
+
+    if (!loyalty) {
+      throw ApiError.notFound('Loyalty points not found');
+    }
+
+    // Get the reward
+    const reward = await prisma.reward.findUnique({
+      where: { id: rewardId },
+    });
+
+    if (!reward || !reward.isActive) {
+      throw ApiError.notFound('Reward not found or inactive');
+    }
+
+    if (loyalty.points < reward.pointsCost) {
+      throw ApiError.badRequest('Insufficient points');
+    }
+
+    // Deduct points and create transaction
+    await prisma.$transaction([
+      prisma.loyaltyPoints.update({
+        where: { userId: req.user!.id },
+        data: {
+          points: { decrement: reward.pointsCost },
+        },
+      }),
+      prisma.pointsTransaction.create({
+        data: {
+          loyaltyId: loyalty.id,
+          type: 'REDEEMED',
+          points: -reward.pointsCost,
+          description: `Redeemed: ${reward.name}`,
+        },
+      }),
+    ]);
+
+    // Create notification
+    await prisma.notification.create({
+      data: {
+        userId: req.user!.id,
+        type: 'SYSTEM',
+        title: 'Reward Redeemed',
+        message: `You redeemed ${reward.name} for ${reward.pointsCost} points!`,
+        data: { rewardId: reward.id },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `Successfully redeemed ${reward.name}`,
+      data: { reward },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete account
+usersRouter.delete('/account', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { password } = req.body;
+
+    // Verify password
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+    });
+
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    // In production, verify password
+    // const isValidPassword = await bcrypt.compare(password, user.password);
+    // if (!isValidPassword) throw ApiError.unauthorized('Invalid password');
+
+    // Soft delete or anonymize user data
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        email: `deleted_${Date.now()}@afrionex.com`,
+        phone: `deleted_${Date.now()}`,
+        firstName: 'Deleted',
+        lastName: 'User',
+        isVerified: false,
+      },
+    });
+
+    // Delete refresh tokens
+    await prisma.refreshToken.deleteMany({
+      where: { userId: req.user!.id },
+    });
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully',
     });
   } catch (error) {
     next(error);

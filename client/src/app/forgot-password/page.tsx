@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { HiMail, HiArrowLeft, HiCheckCircle } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import Logo from '@/components/ui/Logo';
+import { passwordApi } from '@/lib/api';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -30,12 +31,13 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await passwordApi.forgotPassword(data.email);
       setIsSubmitted(true);
       toast.success('Reset link sent!');
     } catch (error) {
-      toast.error('Failed to send reset link');
+      // Still show success to prevent email enumeration
+      setIsSubmitted(true);
+      toast.success('If an account exists, you will receive a reset link.');
     } finally {
       setIsLoading(false);
     }

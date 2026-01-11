@@ -174,3 +174,27 @@ export const userApi = {
   getBookings: () => api.get('/users/bookings'),
   getLoyalty: () => api.get('/users/loyalty'),
 };
+
+// Wallet
+export const walletApi = {
+  getWallet: () => api.get('/wallet'),
+  getTransactions: (params?: { type?: string; page?: number; limit?: number }) =>
+    api.get('/wallet/transactions', { params }),
+  topUp: (data: { amount: number; method: string; phone?: string }) =>
+    api.post('/wallet/topup', data),
+  sendMoney: (data: { recipientPhone: string; amount: number; note?: string }) =>
+    api.post('/wallet/send', data),
+  requestMoney: (data: { fromPhone: string; amount: number; note?: string }) =>
+    api.post('/wallet/request', data),
+  payBill: (data: { billType: string; accountNumber: string; amount: number; provider?: string }) =>
+    api.post('/wallet/pay-bill', data),
+};
+
+// Auth password reset
+export const passwordApi = {
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data: { token: string; email: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/auth/change-password', data),
+};

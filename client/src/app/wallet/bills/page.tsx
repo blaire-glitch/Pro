@@ -741,22 +741,32 @@ export default function BillsPage() {
 
     setIsLoading(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast.success(
-      <div>
-        <p className="font-semibold">Payment Successful!</p>
-        <p className="text-sm">KES {payAmount.toLocaleString()} paid to {selectedProvider.name}</p>
-      </div>
-    );
+    try {
+      const { walletApi } = await import('@/lib/api');
+      await walletApi.payBill({
+        billType: selectedProvider.id,
+        provider: selectedProvider.name,
+        accountNumber,
+        amount: payAmount
+      });
+      
+      toast.success(
+        <div>
+          <p className="font-semibold">Payment Successful!</p>
+          <p className="text-sm">KES {payAmount.toLocaleString()} paid to {selectedProvider.name}</p>
+        </div>
+      );
 
-    if (saveAsBiller) {
-      toast.success('Biller saved for quick access');
+      if (saveAsBiller) {
+        toast.success('Biller saved for quick access');
+      }
+
+      resetFlow();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Payment failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-    resetFlow();
   };
 
   // Handle saved biller selection

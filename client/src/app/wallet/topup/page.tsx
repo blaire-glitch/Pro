@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { HiArrowLeft, HiPhone, HiCreditCard, HiOfficeBuilding } from 'react-icons/hi';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import toast from 'react-hot-toast';
+import { walletApi } from '@/lib/api';
 
 const paymentMethods = [
   { id: 'mpesa', name: 'M-Pesa', icon: HiPhone, color: 'bg-green-500', description: 'Pay via M-Pesa' },
@@ -17,6 +19,7 @@ const paymentMethods = [
 const quickAmounts = [100, 500, 1000, 2000, 5000, 10000];
 
 export default function TopUpPage() {
+  const router = useRouter();
   const [amount, setAmount] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -38,14 +41,33 @@ export default function TopUpPage() {
 
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast.success(`Top up of KES ${parseFloat(amount).toLocaleString()} initiated!`);
-    setIsLoading(false);
-    setAmount('');
-    setSelectedMethod('');
-    setPhoneNumber('');
+    try {
+      const response = await walletApi.topUp({
+        amount: parseFloat(amount),
+        method: selectedMethod.toUpperCase(),
+        phone: phoneNumber || undefined,
+      });
+      
+      const message = response.data.data?.message || `Top up of KES ${parseFloat(amount).toLocaleString()} initiated!`;
+      toast.success(message);
+      
+      if (response.data.data?.demo) {
+        // In demo mode, balance is immediately updated
+        router.push('/wallet');
+      } else {
+        // Show waiting for payment confirmation
+        toast('Please check your phone for payment prompt', { icon: '📱' });
+      }
+      
+      setAmount('');
+      setSelectedMethod('');
+      setPhoneNumber('');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Top up failed. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

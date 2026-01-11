@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -12,16 +12,8 @@ import {
   HiGift, HiStar, HiEye, HiEyeOff, HiQrcode, HiClock
 } from 'react-icons/hi';
 import { FaMobileAlt } from 'react-icons/fa';
-
-// Mock wallet data
-const walletData = {
-  balance: 15750.00,
-  currency: 'KES',
-  accountNumber: '**** 4521',
-  tier: 'Gold',
-  points: 2450,
-  pendingCashback: 125.50,
-};
+import { walletApi } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const quickActions = [
   { icon: HiArrowUp, label: 'Send', color: 'bg-blue-500', href: '/wallet/send' },
@@ -39,22 +31,58 @@ const billCategories = [
   { icon: HiTruck, label: 'Water', color: 'text-cyan-600 bg-cyan-100' },
 ];
 
-const recentTransactions = [
-  { id: 1, type: 'sent', name: 'John Ochieng', amount: -500, time: '10 mins ago', icon: 'user' },
-  { id: 2, type: 'received', name: 'Salary - Safaricom', amount: 45000, time: '2 hours ago', icon: 'office' },
-  { id: 3, type: 'bill', name: 'KPLC Tokens', amount: -1500, time: 'Yesterday', icon: 'lightning' },
-  { id: 4, type: 'cashback', name: 'Cashback Reward', amount: 75, time: 'Yesterday', icon: 'gift' },
-  { id: 5, type: 'sent', name: 'Mama Mboga', amount: -350, time: '2 days ago', icon: 'shopping' },
-];
-
 const savingsPockets = [
   { name: 'Emergency Fund', balance: 5000, goal: 20000, color: 'bg-red-500' },
   { name: 'Holiday Trip', balance: 12500, goal: 50000, color: 'bg-blue-500' },
   { name: 'New Phone', balance: 8000, goal: 15000, color: 'bg-purple-500' },
 ];
 
+interface WalletData {
+  balance: number;
+  currency: string;
+  tier?: string;
+  points?: number;
+  pendingCashback?: number;
+  accountNumber?: string;
+}
+
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  description?: string;
+  createdAt: string;
+  recipientId?: string;
+  senderId?: string;
+}
+
 export default function WalletPage() {
   const [showBalance, setShowBalance] = useState(true);
+  const [walletData, setWalletData] = useState<WalletData>({ balance: 0, currency: 'KES' });
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWalletData();
+  }, []);
+
+  const fetchWalletData = async () => {
+    try {
+      const [walletRes, transactionsRes] = await Promise.all([
+        walletApi.getWallet(),
+        walletApi.getTransactions({ page: 1, limit: 5 }),
+      ]);
+      
+      setWalletData(walletRes.data.wallet);
+      setRecentTransactions(transactionsRes.data.transactions || []);
+    } catch (error: any) {
+      console.error('Failed to fetch wallet:', error);
+      // Use default values if wallet not found
+      setWalletData({ balance: 0, currency: 'KES' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
@@ -81,7 +109,7 @@ export default function WalletPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
-                  <HiStar className="w-3 h-3" /> {walletData.tier}
+                  <HiStar className="w-3 h-3" /> {walletData.tier || 'Bronze'}
                 </span>
               </div>
             </div>
@@ -93,6 +121,7 @@ export default function WalletPage() {
                 <button 
                   onClick={() => setShowBalance(!showBalance)}
                   className="text-white/80 hover:text-white"
+                  title={showBalance ? 'Hide balance' : 'Show balance'}
                 >
                   {showBalance ? <HiEye className="w-5 h-5" /> : <HiEyeOff className="w-5 h-5" />}
                 </button>
@@ -106,14 +135,14 @@ export default function WalletPage() {
                 <div className="flex items-center gap-4">
                   <div className="text-sm">
                     <span className="text-white/60">Points: </span>
-                    <span className="text-yellow-300 font-semibold">{walletData.points.toLocaleString()}</span>
+                    <span className="text-yellow-300 font-semibold">{(walletData.points || 0).toLocaleString()}</span>
                   </div>
                   <div className="text-sm">
                     <span className="text-white/60">Cashback: </span>
-                    <span className="text-green-300 font-semibold">{formatCurrency(walletData.pendingCashback)}</span>
+                    <span className="text-green-300 font-semibold">{formatCurrency(walletData.pendingCashback || 0)}</span>
                   </div>
                 </div>
-                <span className="text-white/60 text-xs">{walletData.accountNumber}</span>
+                <span className="text-white/60 text-xs">{walletData.accountNumber || ''}</span>
               </div>
             </div>
 
@@ -207,22 +236,45 @@ export default function WalletPage() {
               </Link>
             </div>
             <div className="space-y-3">
-              {recentTransactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl">
-                      {tx.icon}
+              {isLoading ? (
+                <div className="text-center py-4 text-gray-500">Loading...</div>
+              ) : recentTransactions.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">No transactions yet</div>
+              ) : (
+                recentTransactions.map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        tx.type === 'RECEIVE' || tx.type === 'TOPUP' || tx.type === 'CASHBACK' 
+                          ? 'bg-green-100 text-green-600' 
+                          : 'bg-red-100 text-red-600'
+                      }`}>
+                        {tx.type === 'RECEIVE' || tx.type === 'TOPUP' ? (
+                          <HiArrowDown className="w-5 h-5" />
+                        ) : (
+                          <HiArrowUp className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{tx.description || tx.type}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(tx.createdAt).toLocaleDateString('en-KE', { 
+                            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+                          })}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{tx.name}</p>
-                      <p className="text-xs text-gray-500">{tx.time}</p>
-                    </div>
+                    <span className={`font-semibold ${
+                      tx.type === 'RECEIVE' || tx.type === 'TOPUP' || tx.type === 'CASHBACK' 
+                        ? 'text-green-600' 
+                        : 'text-gray-900'
+                    }`}>
+                      {tx.type === 'RECEIVE' || tx.type === 'TOPUP' || tx.type === 'CASHBACK' ? '+' : '-'}
+                      {formatCurrency(Math.abs(tx.amount))}
+                    </span>
                   </div>
-                  <span className={`font-semibold ${tx.amount > 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                    {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount)}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </section>
