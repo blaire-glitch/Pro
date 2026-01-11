@@ -48,6 +48,12 @@
 			"isBackground": true,
 			"problemMatcher": [],
 			"group": "none"
+		},
+		{
+			"label": "Prisma Generate",
+			"type": "shell",
+			"command": "cd server && npx prisma generate",
+			"isBackground": false
 		}
 	]
 }
