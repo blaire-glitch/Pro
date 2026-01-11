@@ -36,7 +36,9 @@ const allowedOrigins = [
   'http://localhost:3005',
   process.env.FRONTEND_URL,
   'https://afrionex.vercel.app',
-].filter(Boolean) as string[];
+  'https://client-nha9zy0np-blaire-glitchs-projects.vercel.app',
+  /\.vercel\.app$/,
+].filter(Boolean) as (string | RegExp)[];
 
 const io = new SocketIOServer(httpServer, {
   cors: {
@@ -52,7 +54,15 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    
+    const isAllowed = allowedOrigins.some((allowed) => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
