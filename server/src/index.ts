@@ -22,6 +22,7 @@ import { analyticsRouter } from './routes/analytics.js';
 import { walletRouter } from './routes/wallet.js';
 import { chatRouter } from './routes/chat.js';
 import { referralsRouter } from './routes/referrals.js';
+import { adminRouter } from './routes/admin.js';
 
 dotenv.config();
 
@@ -104,6 +105,7 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/wallet', walletRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/referrals', referralsRouter);
+app.use('/api/admin', adminRouter);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
