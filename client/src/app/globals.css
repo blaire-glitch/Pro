@@ -13,6 +13,15 @@
   body {
     @apply bg-arctic text-graphite antialiased;
   }
+
+  /* Dark mode base styles */
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
 }
 
 @layer components {

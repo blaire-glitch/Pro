@@ -198,3 +198,20 @@ export const passwordApi = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post('/auth/change-password', data),
 };
+
+// Chat
+export const chatApi = {
+  getConversations: (params?: { page?: number; limit?: number }) =>
+    api.get('/chat/conversations', { params }),
+  createConversation: (data: { providerId: string; bookingId?: string }) =>
+    api.post('/chat/conversations', data),
+  getMessages: (conversationId: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/chat/conversations/${conversationId}/messages`, { params }),
+  sendMessage: (conversationId: string, data: { content: string; type?: string; attachments?: string[] }) =>
+    api.post(`/chat/conversations/${conversationId}/messages`, data),
+  markAsRead: (conversationId: string) =>
+    api.patch(`/chat/conversations/${conversationId}/read`),
+  getUnreadCount: () => api.get('/chat/unread-count'),
+  deleteConversation: (conversationId: string) =>
+    api.delete(`/chat/conversations/${conversationId}`),
+};

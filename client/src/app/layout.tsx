@@ -6,6 +6,7 @@ import { FloatingCart } from '@/components/marketplace/FloatingCart';
 import { BackToTop } from '@/components/ui/BackToTop';
 import { QuickActionFAB } from '@/components/ui/QuickActionFAB';
 import { SplashScreen } from '@/components/ui/SplashScreen';
+import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
 import { AIChatBot } from '@/components/chat/AIChatBot';
 import './globals.css';
 
@@ -28,6 +29,19 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
     apple: '/apple-icon.svg',
   },
+  manifest: '/manifest.json',
+  themeColor: '#059669',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Afrionex',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({
@@ -45,6 +59,7 @@ export default function RootLayout({
           <QuickActionFAB />
           <BackToTop />
           <AIChatBot />
+          <PWAInstallPrompt />
           <Toaster 
             position="top-center"
             toastOptions={{

@@ -1072,3 +1072,146 @@ enum TransactionStatus {
   FAILED
   CANCELLED
 }
+
+// ============ CHAT & MESSAGING ============
+
+model Conversation {
+  id              String    @id @default(uuid())
+  
+  // Participants
+  customerId      String
+  providerId      String
+  
+  // Related booking (optional)
+  bookingId       String?
+  
+  // Last message preview
+  lastMessage     String?
+  lastMessageAt   DateTime?
+  
+  // Status
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  messages        Message[]
+  
+  @@unique([customerId, providerId])
+  @@index([customerId])
+  @@index([providerId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id              String    @id @default(uuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String
+  content         String    @db.Text
+  
+  // Message type
+  type            MessageType @default(TEXT)
+  
+  // Attachments (images, files)
+  attachments     String[]
+  
+  // Read status
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+  
+  // Delivery status
+  status          MessageStatus @default(SENT)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  LOCATION
+  BOOKING_UPDATE
+  PAYMENT_REQUEST
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+// ============ REFERRALS ============
+
+model Referral {
+  id              String    @id @default(uuid())
+  referrerId      String
+  referredId      String?   // The user who was referred (filled when they sign up)
+  referralCode    String    @unique
+  
+  // Referral status
+  status          ReferralStatus @default(PENDING)
+  
+  // Rewards
+  referrerReward  Float     @default(0)
+  referredReward  Float     @default(0)
+  rewardsClaimed  Boolean   @default(false)
+  
+  // Tracking
+  signupAt        DateTime?
+  qualifiedAt     DateTime? // When the referred user completed qualifying action
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([referralCode])
+}
+
+model ReferralReward {
+  id          String    @id @default(uuid())
+  userId      String
+  referralId  String
+  
+  amount      Float
+  type        RewardType
+  status      RewardStatus @default(PENDING)
+  
+  claimedAt   DateTime?
+  expiresAt   DateTime?
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([referralId])
+}
+
+enum ReferralStatus {
+  PENDING     // Code created, not yet used
+  SIGNED_UP   // Referred user signed up
+  QUALIFIED   // Referred user completed qualifying action
+  REWARDED    // Rewards distributed
+  EXPIRED     // Referral expired
+}
+
+enum RewardType {
+  CASH
+  POINTS
+  DISCOUNT
+  FREE_SERVICE
+}
+
+enum RewardStatus {
+  PENDING
+  AVAILABLE
+  CLAIMED
+  EXPIRED
+}

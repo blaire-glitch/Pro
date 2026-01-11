@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { HiMenu, HiX, HiUser, HiBell, HiSearch, HiShoppingCart, HiLockClosed } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
+import { HiMenu, HiX, HiUser, HiBell, HiSearch, HiShoppingCart, HiLockClosed, HiChat } from 'react-icons/hi';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
+import { chatApi } from '@/lib/api';
 import Logo from '@/components/ui/Logo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const { user, isAuthenticated } = useAuthStore();
   const { getItemCount } = useCartStore();
   const router = useRouter();
@@ -18,13 +21,34 @@ export function Header() {
   // Check if user has subscription access (subscriber/client)
   const hasSubscriberAccess = isAuthenticated && user?.subscription?.isActive;
 
+  // Fetch unread message count
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await chatApi.getConversations();
+        const conversations = response.data.data || [];
+        const totalUnread = conversations.reduce((sum: number, conv: any) => sum + (conv.unreadCount || 0), 0);
+        setUnreadMessages(totalUnread);
+      } catch (error) {
+        console.error('Failed to fetch unread messages:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   const handleCategoryClick = (category: string) => {
     router.push(`/search?category=${category}`);
     setIsMenuOpen(false);
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -34,19 +58,19 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <button onClick={() => handleCategoryClick('beauty')} className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+            <button onClick={() => handleCategoryClick('beauty')} className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm">
               Beauty
             </button>
-            <button onClick={() => handleCategoryClick('home')} className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+            <button onClick={() => handleCategoryClick('home')} className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm">
               Home
             </button>
-            <button onClick={() => handleCategoryClick('wellness')} className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+            <button onClick={() => handleCategoryClick('wellness')} className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm">
               Wellness
             </button>
-            <button onClick={() => handleCategoryClick('lifestyle')} className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+            <button onClick={() => handleCategoryClick('lifestyle')} className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm">
               Lifestyle
             </button>
-            <button onClick={() => handleCategoryClick('delivery')} className="text-gray-600 hover:text-primary-600 transition-colors text-sm">
+            <button onClick={() => handleCategoryClick('delivery')} className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm">
               Delivery
             </button>
             {/* Services link hidden for preview */}
@@ -68,8 +92,9 @@ export function Header() {
 
           {/* Right Side */}
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle size="sm" />
             <button 
-              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
               aria-label="Search"
             >
               <HiSearch className="w-5 h-5" />
@@ -91,6 +116,18 @@ export function Header() {
             
             {isAuthenticated ? (
               <>
+                <Link 
+                  href="/messages"
+                  className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors relative"
+                  aria-label="Messages"
+                >
+                  <HiChat className="w-5 h-5" />
+                  {unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {unreadMessages > 99 ? '99+' : unreadMessages}
+                    </span>
+                  )}
+                </Link>
                 <button 
                   className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors relative"
                   aria-label="Notifications"

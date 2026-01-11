@@ -20,6 +20,8 @@ import { searchRouter } from './routes/search.js';
 import { subscriptionsRouter } from './routes/subscriptions.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { walletRouter } from './routes/wallet.js';
+import { chatRouter } from './routes/chat.js';
+import { referralsRouter } from './routes/referrals.js';
 
 dotenv.config();
 
@@ -100,6 +102,8 @@ app.use('/api/search', searchRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/wallet', walletRouter);
+app.use('/api/chat', chatRouter);
+app.use('/api/referrals', referralsRouter);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
@@ -108,6 +112,26 @@ io.on('connection', (socket) => {
   socket.on('join_room', (userId: string) => {
     socket.join(`user_${userId}`);
     console.log(`User ${userId} joined their room`);
+  });
+
+  // Chat: typing indicator
+  socket.on('typing_start', ({ conversationId, userId }) => {
+    socket.to(`conversation_${conversationId}`).emit('user_typing', { userId });
+  });
+
+  socket.on('typing_stop', ({ conversationId, userId }) => {
+    socket.to(`conversation_${conversationId}`).emit('user_stopped_typing', { userId });
+  });
+
+  // Join conversation room
+  socket.on('join_conversation', (conversationId: string) => {
+    socket.join(`conversation_${conversationId}`);
+    console.log(`Socket ${socket.id} joined conversation ${conversationId}`);
+  });
+
+  socket.on('leave_conversation', (conversationId: string) => {
+    socket.leave(`conversation_${conversationId}`);
+    console.log(`Socket ${socket.id} left conversation ${conversationId}`);
   });
   
   socket.on('disconnect', () => {
