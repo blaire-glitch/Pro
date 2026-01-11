@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST='{"app\\\\wallet\\\\bills\\\\page.tsx -> @/lib/api":{"id":1837,"files":[]},"components\\\\map\\\\index.tsx -> ./LiveMap":{"id":5778,"files":["static/chunks/d0deef33.e0722780845cf21c.js","static/chunks/5778.b9b2a8391600d304.js"]}}';

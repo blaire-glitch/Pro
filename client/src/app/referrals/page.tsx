@@ -19,7 +19,7 @@ import {
 } from 'react-icons/hi';
 import { FaWhatsapp, FaTwitter, FaFacebook, FaTelegram } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 
 interface ReferralData {
   referralCode: string;
