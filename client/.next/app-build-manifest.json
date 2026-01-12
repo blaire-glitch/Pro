@@ -44,7 +44,7 @@
       "static/chunks/5599-741825b72617ff51.js",
       "static/chunks/3464-46f9602b7f169bd0.js",
       "static/chunks/9064-2548c0b9707ef57b.js",
-      "static/chunks/app/admin/page-9e0ff756a34978e6.js"
+      "static/chunks/app/admin/page-b8de7766d7394824.js"
     ],
     "/afripass/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
@@ -413,20 +413,6 @@
       "static/chunks/2753-29c4c613372c2f5e.js",
       "static/chunks/app/search/page-ba2d11d7da6d8d76.js"
     ],
-    "/services/airtime/page": [
-      "static/chunks/webpack-98518fba11c5e72b.js",
-      "static/chunks/fd9d1056-2582eb407122e502.js",
-      "static/chunks/2117-6b1d46274dd48f70.js",
-      "static/chunks/main-app-2da038fb25c41dc3.js",
-      "static/chunks/93854f56-7bb8e77490192eb7.js",
-      "static/chunks/9081a741-3c8f90fb2ed81638.js",
-      "static/chunks/8088-b1573de4786bc6f3.js",
-      "static/chunks/5599-741825b72617ff51.js",
-      "static/chunks/3464-46f9602b7f169bd0.js",
-      "static/chunks/9064-2548c0b9707ef57b.js",
-      "static/chunks/5337-01b15cf05636e496.js",
-      "static/chunks/app/services/airtime/page-dc476e1f37216355.js"
-    ],
     "/services/data/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
       "static/chunks/fd9d1056-2582eb407122e502.js",
@@ -440,6 +426,20 @@
       "static/chunks/9064-2548c0b9707ef57b.js",
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/services/data/page-1ad4c5485564c9ec.js"
+    ],
+    "/services/airtime/page": [
+      "static/chunks/webpack-98518fba11c5e72b.js",
+      "static/chunks/fd9d1056-2582eb407122e502.js",
+      "static/chunks/2117-6b1d46274dd48f70.js",
+      "static/chunks/main-app-2da038fb25c41dc3.js",
+      "static/chunks/93854f56-7bb8e77490192eb7.js",
+      "static/chunks/9081a741-3c8f90fb2ed81638.js",
+      "static/chunks/8088-b1573de4786bc6f3.js",
+      "static/chunks/5599-741825b72617ff51.js",
+      "static/chunks/3464-46f9602b7f169bd0.js",
+      "static/chunks/9064-2548c0b9707ef57b.js",
+      "static/chunks/5337-01b15cf05636e496.js",
+      "static/chunks/app/services/airtime/page-dc476e1f37216355.js"
     ],
     "/services/food/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
@@ -455,19 +455,6 @@
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/services/food/page-673bcf869d31b917.js"
     ],
-    "/services/page": [
-      "static/chunks/webpack-98518fba11c5e72b.js",
-      "static/chunks/fd9d1056-2582eb407122e502.js",
-      "static/chunks/2117-6b1d46274dd48f70.js",
-      "static/chunks/main-app-2da038fb25c41dc3.js",
-      "static/chunks/93854f56-7bb8e77490192eb7.js",
-      "static/chunks/9081a741-3c8f90fb2ed81638.js",
-      "static/chunks/8088-b1573de4786bc6f3.js",
-      "static/chunks/5599-741825b72617ff51.js",
-      "static/chunks/3464-46f9602b7f169bd0.js",
-      "static/chunks/5337-01b15cf05636e496.js",
-      "static/chunks/app/services/page-befe7d06ca504803.js"
-    ],
     "/services/transport/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
       "static/chunks/fd9d1056-2582eb407122e502.js",
@@ -482,6 +469,19 @@
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/services/transport/page-162d5c20f5b426ad.js"
     ],
+    "/services/page": [
+      "static/chunks/webpack-98518fba11c5e72b.js",
+      "static/chunks/fd9d1056-2582eb407122e502.js",
+      "static/chunks/2117-6b1d46274dd48f70.js",
+      "static/chunks/main-app-2da038fb25c41dc3.js",
+      "static/chunks/93854f56-7bb8e77490192eb7.js",
+      "static/chunks/9081a741-3c8f90fb2ed81638.js",
+      "static/chunks/8088-b1573de4786bc6f3.js",
+      "static/chunks/5599-741825b72617ff51.js",
+      "static/chunks/3464-46f9602b7f169bd0.js",
+      "static/chunks/5337-01b15cf05636e496.js",
+      "static/chunks/app/services/page-befe7d06ca504803.js"
+    ],
     "/terms/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
       "static/chunks/fd9d1056-2582eb407122e502.js",
@@ -494,6 +494,19 @@
       "static/chunks/3464-46f9602b7f169bd0.js",
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/terms/page-337363677b93c38a.js"
+    ],
+    "/vendor/register/page": [
+      "static/chunks/webpack-98518fba11c5e72b.js",
+      "static/chunks/fd9d1056-2582eb407122e502.js",
+      "static/chunks/2117-6b1d46274dd48f70.js",
+      "static/chunks/main-app-2da038fb25c41dc3.js",
+      "static/chunks/93854f56-7bb8e77490192eb7.js",
+      "static/chunks/9081a741-3c8f90fb2ed81638.js",
+      "static/chunks/8088-b1573de4786bc6f3.js",
+      "static/chunks/5599-741825b72617ff51.js",
+      "static/chunks/3464-46f9602b7f169bd0.js",
+      "static/chunks/5337-01b15cf05636e496.js",
+      "static/chunks/app/vendor/register/page-3bdc644307854576.js"
     ],
     "/vendor/dashboard/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
@@ -509,7 +522,7 @@
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/vendor/dashboard/page-ec99a932731f0c6a.js"
     ],
-    "/vendor/register/page": [
+    "/wallet/history/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
       "static/chunks/fd9d1056-2582eb407122e502.js",
       "static/chunks/2117-6b1d46274dd48f70.js",
@@ -519,8 +532,9 @@
       "static/chunks/8088-b1573de4786bc6f3.js",
       "static/chunks/5599-741825b72617ff51.js",
       "static/chunks/3464-46f9602b7f169bd0.js",
+      "static/chunks/9064-2548c0b9707ef57b.js",
       "static/chunks/5337-01b15cf05636e496.js",
-      "static/chunks/app/vendor/register/page-3bdc644307854576.js"
+      "static/chunks/app/wallet/history/page-9e627163adc89336.js"
     ],
     "/wallet/bills/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",
@@ -535,20 +549,6 @@
       "static/chunks/9064-2548c0b9707ef57b.js",
       "static/chunks/5337-01b15cf05636e496.js",
       "static/chunks/app/wallet/bills/page-826b56a63dd02d82.js"
-    ],
-    "/wallet/history/page": [
-      "static/chunks/webpack-98518fba11c5e72b.js",
-      "static/chunks/fd9d1056-2582eb407122e502.js",
-      "static/chunks/2117-6b1d46274dd48f70.js",
-      "static/chunks/main-app-2da038fb25c41dc3.js",
-      "static/chunks/93854f56-7bb8e77490192eb7.js",
-      "static/chunks/9081a741-3c8f90fb2ed81638.js",
-      "static/chunks/8088-b1573de4786bc6f3.js",
-      "static/chunks/5599-741825b72617ff51.js",
-      "static/chunks/3464-46f9602b7f169bd0.js",
-      "static/chunks/9064-2548c0b9707ef57b.js",
-      "static/chunks/5337-01b15cf05636e496.js",
-      "static/chunks/app/wallet/history/page-9e627163adc89336.js"
     ],
     "/wallet/page": [
       "static/chunks/webpack-98518fba11c5e72b.js",

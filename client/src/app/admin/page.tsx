@@ -23,26 +23,30 @@ interface Stats {
   totalProviders: number;
   totalBookings: number;
   totalRevenue: number;
-  pendingProviders: number;
+  pendingVerifications?: number;
 }
 
 interface Provider {
   id: string;
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
+    avatar?: string;
   };
   businessName: string;
   category: string;
+  verificationStatus: string;
   isVerified: boolean;
   createdAt: string;
 }
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   role: string;
@@ -89,21 +93,32 @@ export default function AdminPage() {
     try {
       const [statsRes, providersRes, usersRes, bookingsRes] = await Promise.all([
         api.get('/admin/stats').catch(() => ({ data: null })),
-        api.get('/admin/providers/pending').catch(() => ({ data: [] })),
-        api.get('/admin/users').catch(() => ({ data: [] })),
-        api.get('/admin/bookings').catch(() => ({ data: [] })),
+        api.get('/admin/providers/pending').catch(() => ({ data: null })),
+        api.get('/admin/users').catch(() => ({ data: null })),
+        api.get('/admin/bookings').catch(() => ({ data: null })),
       ]);
       
-      setStats(statsRes.data || {
+      // Handle stats
+      const statsData = statsRes.data?.data || statsRes.data;
+      setStats(statsData || {
         totalUsers: 0,
         totalProviders: 0,
         totalBookings: 0,
         totalRevenue: 0,
         pendingProviders: 0,
       });
-      setPendingProviders(providersRes.data || []);
-      setUsers(usersRes.data || []);
-      setBookings(bookingsRes.data || []);
+      
+      // Handle providers - API returns { data: { items: [...] } }
+      const providersData = providersRes.data?.data?.items || providersRes.data?.data || providersRes.data || [];
+      setPendingProviders(Array.isArray(providersData) ? providersData : []);
+      
+      // Handle users
+      const usersData = usersRes.data?.data?.items || usersRes.data?.data || usersRes.data || [];
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      
+      // Handle bookings
+      const bookingsData = bookingsRes.data?.data?.items || bookingsRes.data?.data || bookingsRes.data || [];
+      setBookings(Array.isArray(bookingsData) ? bookingsData : []);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
     } finally {
@@ -113,11 +128,17 @@ export default function AdminPage() {
 
   const handleVerifyProvider = async (providerId: string, approved: boolean) => {
     try {
-      await api.post(`/admin/providers/${providerId}/verify`, { approved });
+      const status = approved ? 'VERIFIED' : 'REJECTED';
+      await api.patch(`/admin/providers/${providerId}/verify`, { 
+        status,
+        reason: approved ? undefined : 'Application did not meet requirements'
+      });
       toast.success(approved ? 'Provider approved!' : 'Provider rejected');
+      setPendingProviders(prev => prev.filter(p => p.id !== providerId));
       fetchData();
-    } catch (error) {
-      toast.error('Failed to update provider status');
+    } catch (error: any) {
+      console.error('Verify error:', error);
+      toast.error(error.response?.data?.message || 'Failed to update provider status');
     }
   };
 
@@ -131,10 +152,11 @@ export default function AdminPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const fullName = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase()) ||
+           u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return (
@@ -269,7 +291,7 @@ export default function AdminPage() {
                               {provider.businessName}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {provider.user?.name} • {provider.user?.email}
+                              {provider.user?.firstName} {provider.user?.lastName} • {provider.user?.email}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-500">
                               Category: {provider.category} • Applied: {new Date(provider.createdAt).toLocaleDateString()}
@@ -330,7 +352,7 @@ export default function AdminPage() {
                           <tr key={u.id}>
                             <td className="px-4 py-3">
                               <div>
-                                <p className="font-medium text-gray-900 dark:text-white">{u.name}</p>
+                                <p className="font-medium text-gray-900 dark:text-white">{u.firstName} {u.lastName}</p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{u.email}</p>
                               </div>
                             </td>
