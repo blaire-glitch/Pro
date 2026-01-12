@@ -1,4 +1,5 @@
 // User types
+// Note: Backend Prisma enum uses UPPERCASE roles (CUSTOMER, PROVIDER, ADMIN)
 export interface User {
   id: string;
   email: string;
@@ -6,7 +7,7 @@ export interface User {
   lastName: string;
   phone: string;
   avatar?: string;
-  role: 'customer' | 'provider' | 'admin';
+  role: 'CUSTOMER' | 'PROVIDER' | 'ADMIN';
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;

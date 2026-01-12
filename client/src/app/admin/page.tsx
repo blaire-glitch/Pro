@@ -80,8 +80,11 @@ export default function AdminPage() {
       router.push('/login?redirect=/admin');
       return;
     }
-    if (user?.role !== 'admin') {
-      toast.error('Access denied. Admin only.');
+    // Backend returns roles in UPPERCASE (ADMIN, CUSTOMER, PROVIDER)
+    // Also check lowercase for backwards compatibility with cached user data
+    const isAdmin = user?.role === 'ADMIN' || user?.role?.toUpperCase() === 'ADMIN';
+    if (!isAdmin) {
+      toast.error(`Access denied. Admin only. (Your role: ${user?.role})`);
       router.push('/');
       return;
     }
@@ -162,10 +165,14 @@ export default function AdminPage() {
            u.email?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  if (!isAuthenticated || user?.role !== 'admin') {
+  const isAdmin = user?.role === 'ADMIN' || user?.role?.toUpperCase() === 'ADMIN';
+  if (!isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <p className="text-gray-600 dark:text-gray-400">
+          {!isAuthenticated ? 'Please login...' : `Access denied. Your role: ${user?.role}`}
+        </p>
       </div>
     );
   }
@@ -362,8 +369,8 @@ export default function AdminPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 text-xs rounded-full ${
-                                u.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                                u.role === 'provider' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                                u.role === 'PROVIDER' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
                                 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                               }`}>
                                 {u.role}

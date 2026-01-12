@@ -51,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         // Demo accounts for testing (works without backend)
+        // Note: Backend uses UPPERCASE roles (ADMIN, CUSTOMER, PROVIDER)
         const demoAccounts: Record<string, { password: string; user: User }> = {
           'admin@afrionex.com': {
             password: 'admin123',
@@ -60,7 +61,7 @@ export const useAuthStore = create<AuthState>()(
               firstName: 'Admin',
               lastName: 'User',
               phone: '+254700000001',
-              role: 'admin',
+              role: 'ADMIN',
               isVerified: true,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -75,7 +76,7 @@ export const useAuthStore = create<AuthState>()(
               firstName: 'Jane',
               lastName: 'Achieng',
               phone: '+254700000002',
-              role: 'customer',
+              role: 'CUSTOMER',
               isVerified: true,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),

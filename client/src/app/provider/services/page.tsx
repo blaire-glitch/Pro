@@ -89,7 +89,8 @@ export default function ProviderServicesPage() {
       router.push('/login?redirect=/provider/services');
       return;
     }
-    if (user?.role !== 'provider') {
+    // Backend returns roles in UPPERCASE (ADMIN, CUSTOMER, PROVIDER)
+    if (user?.role !== 'PROVIDER') {
       toast.error('Access denied. Providers only.');
       router.push('/');
       return;
@@ -198,7 +199,7 @@ export default function ProviderServicesPage() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  if (!isAuthenticated || user?.role !== 'provider') {
+  if (!isAuthenticated || user?.role !== 'PROVIDER') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
