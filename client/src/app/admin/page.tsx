@@ -92,32 +92,36 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const [statsRes, providersRes, usersRes, bookingsRes] = await Promise.all([
-        api.get('/admin/stats').catch(() => ({ data: null })),
-        api.get('/admin/providers/pending').catch(() => ({ data: null })),
-        api.get('/admin/users').catch(() => ({ data: null })),
-        api.get('/admin/bookings').catch(() => ({ data: null })),
+        api.get('/admin/stats').catch((e) => { console.error('Stats error:', e); return { data: null }; }),
+        api.get('/admin/providers/pending').catch((e) => { console.error('Providers error:', e); return { data: null }; }),
+        api.get('/admin/users').catch((e) => { console.error('Users error:', e); return { data: null }; }),
+        api.get('/admin/bookings').catch((e) => { console.error('Bookings error:', e); return { data: null }; }),
       ]);
       
-      // Handle stats
+      console.log('Stats response:', statsRes.data);
+      console.log('Providers response:', providersRes.data);
+      
+      // Handle stats - API returns { success: true, data: { ... } }
       const statsData = statsRes.data?.data || statsRes.data;
       setStats(statsData || {
         totalUsers: 0,
         totalProviders: 0,
         totalBookings: 0,
         totalRevenue: 0,
-        pendingProviders: 0,
+        pendingVerifications: 0,
       });
       
-      // Handle providers - API returns { data: { items: [...] } }
-      const providersData = providersRes.data?.data?.items || providersRes.data?.data || providersRes.data || [];
+      // Handle providers - API returns { success: true, data: { items: [...] } }
+      const providersData = providersRes.data?.data?.items || providersRes.data?.items || providersRes.data?.data || [];
+      console.log('Parsed providers:', providersData);
       setPendingProviders(Array.isArray(providersData) ? providersData : []);
       
       // Handle users
-      const usersData = usersRes.data?.data?.items || usersRes.data?.data || usersRes.data || [];
+      const usersData = usersRes.data?.data?.items || usersRes.data?.items || usersRes.data?.data || [];
       setUsers(Array.isArray(usersData) ? usersData : []);
       
       // Handle bookings
-      const bookingsData = bookingsRes.data?.data?.items || bookingsRes.data?.data || bookingsRes.data || [];
+      const bookingsData = bookingsRes.data?.data?.items || bookingsRes.data?.items || bookingsRes.data?.data || [];
       setBookings(Array.isArray(bookingsData) ? bookingsData : []);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);

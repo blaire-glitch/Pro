@@ -39,14 +39,14 @@ const allowedOrigins = [
   'http://localhost:3005',
   process.env.FRONTEND_URL,
   'https://afrionex.vercel.app',
-  'https://client-dct86m3gm-blaire-glitchs-projects.vercel.app',
-  'https://client-p0ei9jo3n-blaire-glitchs-projects.vercel.app',
+  'https://afrionex-app.netlify.app',
 ].filter(Boolean) as (string | RegExp)[];
 
-// Function to check if origin is allowed (supports Vercel preview URLs)
+// Function to check if origin is allowed (supports Vercel/Netlify preview URLs)
 const isOriginAllowed = (origin: string): boolean => {
   if (allowedOrigins.includes(origin)) return true;
   if (origin.endsWith('.vercel.app')) return true;
+  if (origin.endsWith('.netlify.app')) return true;
   return false;
 };
 
