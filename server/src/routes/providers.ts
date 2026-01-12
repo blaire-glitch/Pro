@@ -177,6 +177,33 @@ providersRouter.get('/:idOrLink', optionalAuth, async (req: Request, res: Respon
   }
 });
 
+// Get current provider's own services (with inactive ones)
+providersRouter.get('/me/services', authenticate, authorize('PROVIDER'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const provider = await prisma.provider.findUnique({
+      where: { userId: req.user!.id },
+    });
+
+    if (!provider) {
+      throw ApiError.notFound('Provider profile not found');
+    }
+
+    const services = await prisma.service.findMany({
+      where: { providerId: provider.id },
+      include: {
+        _count: {
+          select: { bookings: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({ success: true, data: services });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Create provider profile
 providersRouter.post('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {

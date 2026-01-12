@@ -7,7 +7,7 @@ import {
   HiHome, HiCalendar, HiCurrencyDollar, HiChartBar,
   HiStar, HiCog, HiMenu, HiX, HiBell, HiTrendingUp,
   HiTrendingDown, HiUserGroup, HiClock, HiCheck,
-  HiPencil, HiGift, HiLink
+  HiPencil, HiGift, HiLink, HiTag
 } from 'react-icons/hi';
 import { format } from 'date-fns';
 import Logo, { LogoIcon } from '@/components/ui/Logo';
@@ -76,6 +76,7 @@ const mockEarningsData = [
 const navItems = [
   { icon: HiHome, label: 'Dashboard', href: '/provider/dashboard', active: true },
   { icon: HiCalendar, label: 'Bookings', href: '/provider/bookings' },
+  { icon: HiTag, label: 'Services', href: '/provider/services' },
   { icon: HiCurrencyDollar, label: 'Earnings', href: '/provider/earnings' },
   { icon: HiChartBar, label: 'Analytics', href: '/provider/analytics' },
   { icon: HiStar, label: 'Reviews', href: '/provider/reviews' },
