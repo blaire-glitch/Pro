@@ -39,9 +39,16 @@ const allowedOrigins = [
   'http://localhost:3005',
   process.env.FRONTEND_URL,
   'https://afrionex.vercel.app',
-  'https://client-nha9zy0np-blaire-glitchs-projects.vercel.app',
-  /\.vercel\.app$/,
+  'https://client-dct86m3gm-blaire-glitchs-projects.vercel.app',
+  'https://client-p0ei9jo3n-blaire-glitchs-projects.vercel.app',
 ].filter(Boolean) as (string | RegExp)[];
+
+// Function to check if origin is allowed (supports Vercel preview URLs)
+const isOriginAllowed = (origin: string): boolean => {
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith('.vercel.app')) return true;
+  return false;
+};
 
 const io = new SocketIOServer(httpServer, {
   cors: {
@@ -58,16 +65,10 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    const isAllowed = allowedOrigins.some((allowed) => {
-      if (allowed instanceof RegExp) {
-        return allowed.test(origin);
-      }
-      return allowed === origin;
-    });
-    
-    if (isAllowed) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
