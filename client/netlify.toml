@@ -8,8 +8,19 @@
   NEXT_PUBLIC_APP_NAME = "Afrionex"
   NEXT_PUBLIC_APP_URL = "https://afrionex.netlify.app"
 
+# Required for Next.js on Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [[redirects]]
   from = "/api/*"
   to = "https://imaginative-joy-production.up.railway.app/api/:splat"
   status = 200
   force = true
+
+# Handle client-side routing - fallback to index
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
