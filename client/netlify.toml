@@ -4,6 +4,9 @@
 
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://imaginative-joy-production.up.railway.app/api"
+  NEXT_PUBLIC_SOCKET_URL = "https://imaginative-joy-production.up.railway.app"
+  NEXT_PUBLIC_APP_NAME = "Afrionex"
+  NEXT_PUBLIC_APP_URL = "https://afrionex.netlify.app"
 
 [[redirects]]
   from = "/api/*"
