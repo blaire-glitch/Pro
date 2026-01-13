@@ -15,6 +15,7 @@ import { QuickActions } from '@/components/home/QuickActions';
 import { DailyRewards } from '@/components/home/DailyRewards';
 import { PersonalizedAds } from '@/components/ads/PersonalizedAds';
 import { ServiceRecommendations } from '@/components/recommendations/ServiceRecommendations';
+import { InstallBanner } from '@/components/ui/InstallBanner';
 import { HiSearch, HiLocationMarker, HiStar, HiShieldCheck, HiClock, HiArrowRight, HiCreditCard } from 'react-icons/hi';
 
 // Coverage cities in Western Kenya
@@ -103,6 +104,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      <InstallBanner />
       <Header />
       
       {/* Hero Section */}

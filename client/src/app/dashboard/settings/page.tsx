@@ -6,9 +6,11 @@ import Image from 'next/image';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useAuthStore } from '@/store/authStore';
+import { InstallAppButton } from '@/components/ui/PWAInstallPrompt';
 import { 
   HiArrowLeft, HiUser, HiBell, HiShieldCheck, HiCreditCard,
-  HiLocationMarker, HiTrash, HiLogout, HiCamera, HiPencil, HiPhone
+  HiLocationMarker, HiTrash, HiLogout, HiCamera, HiPencil, HiPhone,
+  HiDownload
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -97,6 +99,15 @@ export default function SettingsPage() {
               </nav>
 
               <div className="mt-4 bg-white rounded-2xl shadow-sm p-4">
+                {/* Install App Button */}
+                <Link
+                  href="/install"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-primary-600 hover:bg-primary-50 transition-colors mb-2"
+                >
+                  <HiDownload className="w-5 h-5" />
+                  <span>Install App</span>
+                </Link>
+                
                 <button
                   onClick={() => logout()}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
