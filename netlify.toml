@@ -1,6 +1,8 @@
+# Netlify configuration - points to client folder
 [build]
+  base = "client"
   command = "npm run build"
-  publish = ".next"
+  publish = "client/.next"
 
 [build.environment]
   NEXT_PUBLIC_API_URL = "https://imaginative-joy-production.up.railway.app/api"
@@ -17,5 +19,3 @@
   to = "https://imaginative-joy-production.up.railway.app/api/:splat"
   status = 200
   force = true
-
-
