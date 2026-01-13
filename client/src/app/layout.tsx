@@ -7,7 +7,9 @@ import { BackToTop } from '@/components/ui/BackToTop';
 import { QuickActionFAB } from '@/components/ui/QuickActionFAB';
 import { SplashScreen } from '@/components/ui/SplashScreen';
 import { PWAInstallPrompt } from '@/components/ui/PWAInstallPrompt';
+import { OnboardingModal } from '@/components/ui/OnboardingModal';
 import { AIChatBot } from '@/components/chat/AIChatBot';
+import { BottomNav } from '@/components/layout/BottomNav';
 import './globals.css';
 
 const inter = Inter({ 
@@ -54,7 +56,9 @@ export default function RootLayout({
       <body className={`${inter.variable} ${poppins.variable} font-sans`}>
         <Providers>
           <SplashScreen />
+          <OnboardingModal />
           {children}
+          <BottomNav />
           <FloatingCart />
           <QuickActionFAB />
           <BackToTop />
